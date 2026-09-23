@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Radiant AI</title>
+<meta name="description" content="Radiant AI — an agent network.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="vignette" aria-hidden="true"></div>
+<div class="scanlines" aria-hidden="true"></div>
+<div class="boot" aria-hidden="true"></div>
+
+<main class="shell">
+
+  <nav class="topnav" aria-label="Primary">
+    <a class="navlink" href="docs/oorr/">Documentation</a>
+  </nav>
+
+  <section class="stage" id="stage">
+    <svg class="edges" id="edges" aria-hidden="true">
+      <g id="gMotes"></g>
+      <g id="gSonar"></g>
+      <g id="gEdges"></g>
+      <g id="gPings"></g>
+      <g id="gPackets"></g>
+    </svg>
+
+    <div class="node node--root" id="root">
+      <div class="core">
+        <span class="halo" aria-hidden="true"></span>
+        <div class="mark-wrap" id="markWrap">
+          <img src="assets/radiant-mark.png" alt="Radiant AI" class="mark" draggable="false">
+          <span class="ghost ghost--a" aria-hidden="true"></span>
+          <span class="ghost ghost--b" aria-hidden="true"></span>
+        </div>
+        <span class="wordmark" data-text="Radiant AI">Radiant&#8202;&nbsp;AI</span>
+      </div>
+    </div>
+
+    <div class="node node--agent" data-agent="photon">
+      <div class="core">
+        <span class="disc">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true">
+            <circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/>
+            <path d="M12 3.4v3.2M12 17.4v3.2M3.4 12h3.2M17.4 12h3.2"/>
+            <path d="M6.3 6.3l2.1 2.1M15.6 15.6l2.1 2.1M17.7 6.3l-2.1 2.1M8.4 15.6l-2.1 2.1" opacity=".5"/>
+          </svg>
+        </span>
+        <span class="label">Photon</span>
+      </div>
+    </div>
+
+    <div class="node node--agent" data-agent="flame">
+      <div class="core">
+        <span class="disc">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true">
+            <path d="M12.6 2.4c.5 2.6-1 3.9-2.5 5.4-1.7 1.7-3 3.2-3 5.5a5.4 5.4 0 0 0 10.8 0c0-2.4-1.4-4.2-2.7-5.6-.2 1.3-.8 2.1-1.7 2.5.5-2.7-.2-5.2-.9-7.8Z"/>
+            <path d="M12.1 19c1.4 0 2.4-.9 2.4-2.1 0-1.4-1.2-2.1-1.8-3.3-.6 1-1.4 1.5-1.9 2.3-.5.9-.5 3.1 1.3 3.1Z" opacity=".5"/>
+          </svg>
+        </span>
+        <span class="label">Flame</span>
+      </div>
+    </div>
+
+    <div class="node node--agent" data-agent="ray">
+      <div class="core">
+        <span class="disc">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true">
+            <path d="M4 20 20 4"/>
+            <path d="M14.6 4H20v5.4"/>
+            <path d="M7.4 20 20 7.4M4 16.6 16.6 4" opacity=".38"/>
+          </svg>
+        </span>
+        <span class="label">Ray</span>
+      </div>
+    </div>
+
+    <div class="node node--agent" data-agent="glow">
+      <div class="core">
+        <span class="disc">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true">
+            <circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/>
+            <circle cx="12" cy="12" r="5.6" opacity=".6"/>
+            <circle cx="12" cy="12" r="9.2" opacity=".26"/>
+          </svg>
+        </span>
+        <span class="label">Glow</span>
+      </div>
+    </div>
+
+    <div class="node node--agent" data-agent="ember">
+      <div class="core">
+        <span class="disc">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true">
+            <circle cx="12" cy="16.6" r="4.3" fill="currentColor" stroke="none" opacity=".9"/>
+            <circle cx="12" cy="16.6" r="7.4" opacity=".3"/>
+            <path d="M8.6 9.4c1-.8 0-1.9 1-2.7M12 8.2c1-.8 0-1.9 1-2.7M15.4 9.4c1-.8 0-1.9 1-2.7" opacity=".6"/>
+          </svg>
+        </span>
+        <span class="label">Ember</span>
+      </div>
+    </div>
+
+    <div class="node node--agent" data-agent="shine">
+      <div class="core">
+        <span class="disc">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true">
+            <path d="M10.6 3.4c.9 4.6 2.1 5.9 6.7 6.8-4.6.9-5.8 2.2-6.7 6.8-.9-4.6-2.2-5.9-6.8-6.8 4.6-.9 5.9-2.2 6.8-6.8Z"/>
+            <path d="M18.3 14.4c.4 2 .9 2.5 2.9 2.9-2 .4-2.5.9-2.9 2.9-.4-2-.9-2.5-2.9-2.9 2-.4 2.5-.9 2.9-2.9Z" opacity=".5"/>
+          </svg>
+        </span>
+        <span class="label">Shine</span>
+      </div>
+    </div>
+
+    <div class="node node--agent" data-agent="sprint">
+      <div class="core">
+        <span class="disc">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true">
+            <path d="M9.6 5.2 15.6 12l-6 6.8"/>
+            <path d="M14.6 5.2 20.6 12l-6 6.8" opacity=".45"/>
+            <path d="M2.8 8.8h3.6M2.8 12h5.2M2.8 15.2h3.6" opacity=".45"/>
+          </svg>
+        </span>
+        <span class="label">Sprint</span>
+      </div>
+    </div>
+
+    <div class="node node--agent" data-agent="spread">
+      <div class="core">
+        <span class="disc">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true">
+            <path d="M11.1 6.6 5.6 16.4M12 6.8v9.4M12.9 6.6l5.5 9.8" opacity=".5"/>
+            <circle cx="12" cy="4.8" r="2"/>
+            <circle cx="4.7" cy="18.2" r="2"/>
+            <circle cx="12" cy="18.2" r="2"/>
+            <circle cx="19.3" cy="18.2" r="2"/>
+          </svg>
+        </span>
+        <span class="label">Spread</span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <a class="link" href="https://radiant-iraq.com" target="_blank" rel="noopener">radiant-iraq.com</a>
+    <span class="sep" aria-hidden="true"></span>
+    <a class="link" href="https://instagram.com/radiant.iq" target="_blank" rel="noopener">@radiant.iq</a>
+  </footer>
+
+</main>
+
+<script src="graph.js"></script>
+</body>
+</html>

@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radiant — Autonomous Financial Operating System</title>
+<meta name="description" content="One autonomous multi-agent financial platform. Primary hackathon challenge: Bill Pay &amp; Transfer Agent, native to Iraqi Arabic.">
+<style>
+:root{
+  --ink:#0B1220;
+  --text:#3B4555;
+  --muted:#6B7686;
+  --faint:#95A0AE;
+  --bg:#FAFAFB;
+  --surface:#FFFFFF;
+  --line:#E5E8EE;
+  --line-soft:#EFF1F5;
+  --accent:#0E7C66;
+  --accent-soft:#E9F4F1;
+  --accent-line:#BFDFD6;
+  --amber:#9A6209;
+  --amber-soft:#FBF3E6;
+  --amber-line:#EBD9B6;
+  --slate-soft:#F3F5F8;
+  --radius:14px;
+  --maxw:1080px;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --ar:"Noto Naskh Arabic","Geeza Pro","Segoe UI",Tahoma,serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#F2F5F9; --text:#B9C2CE; --muted:#8B96A5; --faint:#6F7A89;
+    --bg:#0A0E14; --surface:#111722; --line:#212939; --line-soft:#1A2130;
+    --accent:#4FC2A5; --accent-soft:#11241F; --accent-line:#255045;
+    --amber:#D9A75A; --amber-soft:#241D10; --amber-line:#4A3B1E; --slate-soft:#161C27;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--sans); font-size:16px; line-height:1.6;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+h1,h2,h3,h4{color:var(--ink); margin:0; font-weight:640; letter-spacing:-0.022em; line-height:1.18}
+h1{font-size:clamp(2.1rem,5.2vw,3.35rem); letter-spacing:-0.035em}
+h2{font-size:clamp(1.4rem,2.6vw,1.85rem)}
+h3{font-size:1.02rem; letter-spacing:-0.012em}
+h4{font-size:.9rem; letter-spacing:-0.005em}
+p{margin:0}
+a{color:inherit}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px}
+section{padding:68px 0; border-top:1px solid var(--line-soft)}
+section:first-of-type{border-top:0}
+
+/* ---- nav ---- */
+.nav{
+  position:sticky; top:0; z-index:20; background:color-mix(in srgb,var(--bg) 88%, transparent);
+  backdrop-filter:saturate(180%) blur(12px); border-bottom:1px solid var(--line-soft);
+}
+.nav-in{max-width:var(--maxw); margin:0 auto; padding:12px 24px; display:flex; align-items:center; gap:22px}
+.brand{display:flex; align-items:center; gap:9px; font-weight:660; color:var(--ink); letter-spacing:-0.02em; font-size:.95rem}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent); flex:none}
+.nav ul{display:flex; gap:20px; list-style:none; margin:0 0 0 auto; padding:0; overflow-x:auto; scrollbar-width:none}
+.nav ul::-webkit-scrollbar{display:none}
+.nav a{color:var(--muted); text-decoration:none; font-size:.83rem; white-space:nowrap; padding:4px 0; border-bottom:1.5px solid transparent}
+.nav a:hover{color:var(--ink)}
+.nav a.on{color:var(--ink); border-bottom-color:var(--accent)}
+@media(max-width:720px){ .nav ul{display:none} }
+
+/* ---- shared bits ---- */
+.eyebrow{
+  font-family:var(--mono); font-size:.695rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--faint); margin-bottom:14px;
+}
+.lede{font-size:1.02rem; color:var(--muted); max-width:62ch; margin-top:12px}
+.grid{display:grid; gap:14px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:860px){ .g3,.g4{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:560px){ .g2,.g3,.g4{grid-template-columns:1fr} }
+.card{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+  padding:20px 20px 19px;
+}
+.card p{font-size:.875rem; color:var(--muted); margin-top:7px}
+.card .num{font-family:var(--mono); font-size:.7rem; color:var(--faint); display:block; margin-bottom:9px}
+.tag{
+  display:inline-flex; align-items:center; gap:6px; font-family:var(--mono);
+  font-size:.66rem; letter-spacing:.07em; text-transform:uppercase;
+  padding:4px 9px; border-radius:100px; border:1px solid var(--line); color:var(--muted);
+  background:var(--surface);
+}
+.tag.primary{background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent)}
+.tag.gate{background:var(--amber-soft); border-color:var(--amber-line); color:var(--amber)}
+.ar{font-family:var(--ar); direction:rtl; unicode-bidi:isolate; font-size:1.02rem; color:var(--ink); line-height:1.75}
+
+/* ---- hero ---- */
+.hero{padding:64px 0 60px}
+.hero .kicker{
+  display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-size:.7rem;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--accent);
+  background:var(--accent-soft); border:1px solid var(--accent-line);
+  padding:5px 11px; border-radius:100px; margin-bottom:22px;
+}
+.hero h1 span{color:var(--muted)}
+.hero .value{font-size:clamp(1.05rem,2.1vw,1.22rem); color:var(--text); max-width:60ch; margin-top:20px; line-height:1.55}
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:26px}
+.hero-line{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:38px;
+  border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; background:var(--surface);
+}
+.hero-line div{padding:16px 18px; border-left:1px solid var(--line-soft)}
+.hero-line div:first-child{border-left:0}
+.hero-line b{display:block; color:var(--ink); font-size:.86rem; font-weight:620}
+.hero-line span{font-size:.76rem; color:var(--faint)}
+@media(max-width:700px){ .hero-line{grid-template-columns:repeat(2,1fr)} .hero-line div:nth-child(3){border-left:0} .hero-line div:nth-child(n+3){border-top:1px solid var(--line-soft)} }
+
+/* ---- statement ---- */
+.statement{
+  border-left:2px solid var(--accent); padding:4px 0 4px 22px; margin:0;
+  font-size:clamp(1.08rem,2.2vw,1.32rem); color:var(--ink); font-weight:560;
+  letter-spacing:-0.018em; line-height:1.45; max-width:58ch;
+}
+.statement small{display:block; font-family:var(--mono); font-size:.72rem; font-weight:400; color:var(--muted); letter-spacing:.02em; margin-top:12px; text-transform:none}
+
+/* ---- flow / diagram primitives ---- */
+.stack{display:flex; flex-direction:column; gap:8px}
+.node{
+  background:var(--surface); border:1px solid var(--line); border-radius:11px;
+  padding:13px 16px; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
+}
+.node b{color:var(--ink); font-size:.875rem; font-weight:610; letter-spacing:-0.01em}
+.node span{font-size:.8rem; color:var(--muted)}
+.node.accent{background:var(--accent-soft); border-color:var(--accent-line)}
+.node.gate{background:var(--amber-soft); border-color:var(--amber-line)}
+.node.ghost{background:transparent; border-style:dashed}
+.arrow{
+  height:16px; margin-left:22px; border-left:1.5px solid var(--line);
+  position:relative;
+}
+.arrow::after{
+  content:""; position:absolute; left:-4px; bottom:-1px; width:7px; height:7px;
+  border-right:1.5px solid var(--line); border-bottom:1.5px solid var(--line);
+  transform:rotate(45deg);
+}
+.fanrow{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
+@media(max-width:700px){ .fanrow{grid-template-columns:repeat(2,1fr)} }
+.mini{
+  background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:11px 12px;
+  font-size:.79rem; color:var(--ink); font-weight:560; text-align:center;
+}
+.mini em{display:block; font-style:normal; font-size:.7rem; color:var(--faint); font-weight:400; margin-top:3px}
+
+/* ---- architecture layers ---- */
+.arch{display:flex; flex-direction:column; gap:10px}
+.layer{
+  border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); padding:16px 18px;
+}
+.layer .lbl{
+  font-family:var(--mono); font-size:.66rem; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--faint); margin-bottom:11px;
+}
+.layer.jev{background:var(--accent-soft); border-color:var(--accent-line)}
+.layer.jev .lbl{color:var(--accent)}
+.jev-q{display:flex; flex-wrap:wrap; gap:7px}
+.jev-q span{
+  font-size:.775rem; color:var(--ink); background:var(--surface);
+  border:1px solid var(--accent-line); border-radius:100px; padding:4px 11px;
+}
+.agentgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
+@media(max-width:820px){ .agentgrid{grid-template-columns:repeat(2,1fr)} }
+.agent{
+  border:1px solid var(--line); border-radius:10px; padding:12px 13px; background:var(--bg);
+}
+.agent b{display:block; color:var(--ink); font-size:.82rem; font-weight:610}
+.agent span{display:block; font-size:.745rem; color:var(--muted); margin-top:4px; line-height:1.45}
+.agent.primary{background:var(--accent-soft); border-color:var(--accent-line)}
+.railrow{display:flex; flex-wrap:wrap; gap:7px}
+.rail{
+  font-family:var(--mono); font-size:.73rem; color:var(--muted);
+  border:1px solid var(--line); border-radius:8px; padding:6px 10px; background:var(--bg);
+}
+.sidebars{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+@media(max-width:700px){ .sidebars{grid-template-columns:1fr} }
+
+/* ---- walkthrough ---- */
+.steps{border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); overflow:hidden}
+.step{display:grid; grid-template-columns:100px 1fr; border-top:1px solid var(--line-soft)}
+.step:first-child{border-top:0}
+.step .who{
+  padding:15px 14px; font-family:var(--mono); font-size:.68rem; letter-spacing:.06em;
+  color:var(--faint); text-transform:uppercase; border-right:1px solid var(--line-soft); background:var(--slate-soft);
+}
+.step .what{padding:14px 18px}
+.step .what b{color:var(--ink); font-size:.865rem; font-weight:600}
+.step .what p{font-size:.815rem; color:var(--muted); margin-top:4px}
+.step.gate .what{background:var(--amber-soft)}
+.step.gate .who{background:var(--amber-soft); color:var(--amber)}
+@media(max-width:560px){ .step{grid-template-columns:1fr} .step .who{border-right:0; border-bottom:1px solid var(--line-soft)} }
+
+/* ---- loop ---- */
+.loop{display:grid; grid-template-columns:repeat(7,1fr); gap:8px}
+@media(max-width:900px){ .loop{grid-template-columns:repeat(4,1fr)} }
+@media(max-width:560px){ .loop{grid-template-columns:repeat(2,1fr)} }
+.loop .mini{text-align:left}
+.loop .mini i{font-style:normal; display:block; font-family:var(--mono); font-size:.66rem; color:var(--faint); margin-bottom:5px}
+
+/* ---- tables ---- */
+.tbl{width:100%; border-collapse:collapse; font-size:.845rem}
+.tbl-wrap{border:1px solid var(--line); border-radius:var(--radius); overflow-x:auto; background:var(--surface)}
+.tbl th{
+  text-align:left; font-family:var(--mono); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--faint); font-weight:500; padding:12px 16px; border-bottom:1px solid var(--line); background:var(--slate-soft);
+  white-space:nowrap;
+}
+.tbl td{padding:12px 16px; border-bottom:1px solid var(--line-soft); color:var(--muted); vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td:first-child{color:var(--ink); font-weight:550; white-space:nowrap}
+.tbl td.wrap-ok:first-child{white-space:normal}
+@media(max-width:620px){ .tbl td:first-child{white-space:normal} .tbl th,.tbl td{padding:11px 13px} }
+
+/* ---- arabic examples ---- */
+.ar-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+@media(max-width:820px){ .ar-grid{grid-template-columns:1fr} }
+.ar-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px}
+.ar-card .gloss{font-size:.79rem; color:var(--muted); margin-top:10px; padding-top:10px; border-top:1px solid var(--line-soft)}
+.ar-card .route{font-family:var(--mono); font-size:.7rem; color:var(--accent); margin-top:8px}
+
+/* ---- scope / closing ---- */
+.scope{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+@media(max-width:700px){ .scope{grid-template-columns:1fr} }
+.scope .card.now{border-color:var(--accent-line); background:var(--accent-soft)}
+.scope ul{margin:10px 0 0; padding-left:18px}
+.scope li{font-size:.84rem; color:var(--muted); margin-top:5px}
+.closing{padding:76px 0 90px}
+.closing p{font-size:clamp(1.15rem,2.5vw,1.5rem); color:var(--ink); font-weight:560; letter-spacing:-0.022em; line-height:1.4; max-width:56ch}
+footer{border-top:1px solid var(--line-soft); padding:26px 0 44px}
+footer .row{display:flex; flex-wrap:wrap; gap:14px; justify-content:space-between; font-size:.76rem; color:var(--faint)}
+.note{font-size:.78rem; color:var(--faint); margin-top:14px}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-in">
+    <div class="brand"><span class="dot"></span> Radiant</div>
+    <ul>
+      <li><a href="#problem">Problem</a></li>
+      <li><a href="#solution">Solution</a></li>
+      <li><a href="#usecase">Use Case</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#workflow">Workflow</a></li>
+      <li><a href="#platform">Platform</a></li>
+      <li><a href="#safety">Safety</a></li>
+      <li><a href="#evaluation">Evaluation</a></li>
+      <li><a href="#scope">Scope</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main>
+
+<!-- 1 · HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="kicker">Agentic AI Iraq Hackathon · Primary challenge: Bill Pay &amp; Transfer Agent</div>
+    <h1>Radiant<br><span>An autonomous financial operating system.</span></h1>
+    <p class="value">
+      A user states a financial goal in everyday Iraqi Arabic. One orchestrator plans it, specialist agents
+      carry it out, and a verification layer confirms the action matches the request — before any money moves.
+    </p>
+    <div class="chips">
+      <span class="tag primary">Primary build · Bill Pay &amp; Transfer</span>
+      <span class="tag">Iraqi Arabic native</span>
+      <span class="tag">Synthetic data only</span>
+      <span class="tag">Permission-bounded autonomy</span>
+    </div>
+    <div class="hero-line">
+      <div><b>One goal</b><span>stated in dialect</span></div>
+      <div><b>One orchestrator</b><span>plans and routes</span></div>
+      <div><b>Many agents</b><span>payment · fraud · KYC</span></div>
+      <div><b>Verified action</b><span>checked, then executed</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 · PROBLEM -->
+<section id="problem">
+  <div class="wrap">
+    <div class="eyebrow">01 — The problem</div>
+    <h2>A single financial intention costs a dozen steps.</h2>
+    <p class="lede">Paying a bill or sending money is one thought for the user and a chain of disconnected systems for everyone else.</p>
+    <div class="grid g4" style="margin-top:28px">
+      <div class="card"><span class="num">01</span><h3>Fragmented rails</h3><p>Bills, wallets, bank transfers and merchant accounts each live in a separate app with its own flow and identifiers.</p></div>
+      <div class="card"><span class="num">02</span><h3>Language mismatch</h3><p>Interfaces expect formal Arabic or English menus. People speak Iraqi dialect, half-sentences, and voice notes.</p></div>
+      <div class="card"><span class="num">03</span><h3>Manual context</h3><p>The user re-supplies the same recipient, account and amount details to every channel, every time.</p></div>
+      <div class="card"><span class="num">04</span><h3>Late risk checks</h3><p>Fraud and KYC problems surface after the transfer, in a support ticket — not before the decision.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 · SOLUTION -->
+<section id="solution">
+  <div class="wrap">
+    <div class="eyebrow">02 — Our solution</div>
+    <h2>One platform. Many agents. One accountable decision path.</h2>
+    <blockquote class="statement" style="margin-top:26px">
+      This is not six disconnected AI features. It is one autonomous financial operating system whose agents
+      collaborate to complete financial goals safely.
+      <small>One user goal → one orchestrator → multiple specialist agents → verified action.</small>
+    </blockquote>
+    <div class="grid g4" style="margin-top:32px">
+      <div class="card"><h3>Central orchestrator</h3><p>A supervisor agent turns a stated goal into a plan and owns the outcome end to end.</p></div>
+      <div class="card"><h3>Specialist agents</h3><p>Narrow, testable agents for payment, fraud, KYC, verification, lending, merchants and support.</p></div>
+      <div class="card"><h3>Shared memory &amp; tools</h3><p>One context store and one governed tool layer, so every agent sees the same facts and calls the same rails.</p></div>
+      <div class="card"><h3>Permission boundaries</h3><p>Autonomy is explicit: what an agent may do alone, what needs confirmation, what is blocked.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 · PRIMARY USE CASE -->
+<section id="usecase">
+  <div class="wrap">
+    <div class="eyebrow">03 — Primary hackathon use case</div>
+    <h2>Bill Pay &amp; Transfer Agent</h2>
+    <p class="lede">The one workflow we build deeply, instrument, and evaluate against a held-out test set.</p>
+
+    <div class="ar-grid" style="margin-top:28px">
+      <div class="ar-card">
+        <p class="ar">حول ٥٠ ألف لحيدر.</p>
+        <p class="route">→ intent: transfer · recipient ambiguous</p>
+        <p class="gloss">Known contact, low amount. Agent resolves the recipient, confirms the match, executes.</p>
+      </div>
+      <div class="ar-card">
+        <p class="ar">ادفع فاتورة الكهرباء.</p>
+        <p class="route">→ intent: bill_pay · biller known</p>
+        <p class="gloss">Pulls the outstanding amount, checks the due date, presents it for a one-tap confirmation.</p>
+      </div>
+      <div class="ar-card">
+        <p class="ar">دزّيت فلوس بس ما وصلت.</p>
+        <p class="route">→ intent: support · transaction trace</p>
+        <p class="gloss">Not a new payment. Routed to trace the prior transfer and its settlement state.</p>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-top:14px">
+      <div class="card"><h3>What the agent owns</h3><p>Understanding the goal, resolving recipient and biller, completing missing fields, preparing the transaction, executing against the payment tool, and confirming the result.</p></div>
+      <div class="card"><h3>What it must never do</h3><p>Move money on an unresolved recipient, skip the confirmation gate above the risk threshold, or report success it has not verified.</p></div>
+      <div class="card"><h3>What "done" means</h3><p>The executed transaction matches the user's stated goal on every field, the user was shown what they approved, and the result was read back from the rail.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · ARCHITECTURE -->
+<section id="architecture">
+  <div class="wrap">
+    <div class="eyebrow">04 — Multi-agent architecture</div>
+    <h2>Supervisor, JEV, and specialist agents.</h2>
+    <p class="lede">Every request descends the same path. What changes is how far down it needs to go.</p>
+
+    <div class="arch" style="margin-top:30px">
+
+      <div class="layer">
+        <div class="lbl">Interface</div>
+        <div class="railrow">
+          <span class="rail">Iraqi Arabic text</span>
+          <span class="rail">Voice note</span>
+          <span class="rail">Document / bill upload</span>
+          <span class="rail">Merchant console</span>
+        </div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="layer">
+        <div class="lbl">Intent &amp; context understanding</div>
+        <div class="railrow">
+          <span class="rail">dialect normalization</span>
+          <span class="rail">goal extraction</span>
+          <span class="rail">entity resolution</span>
+          <span class="rail">session memory lookup</span>
+        </div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="layer jev">
+        <div class="lbl">JEV mode · fast decision &amp; routing layer</div>
+        <p style="font-size:.85rem; color:var(--text); margin-bottom:12px; max-width:70ch">
+          A lightweight pass that decides how much machinery a request actually needs, so trivial requests never
+          pay for a full reasoning pipeline. It answers, cheaply:
+        </p>
+        <div class="jev-q">
+          <span>What does the user want?</span>
+          <span>Which agent is needed?</span>
+          <span>One agent or several?</span>
+          <span>Is retrieval or data needed?</span>
+          <span>Is an external tool required?</span>
+          <span>Is the action sensitive?</span>
+          <span>Is user confirmation required?</span>
+          <span>Block or escalate?</span>
+        </div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="layer">
+        <div class="lbl">Supervisor / orchestrator agent</div>
+        <p style="font-size:.85rem; color:var(--text); max-width:70ch">
+          Builds the plan, selects agents dynamically, sequences their calls, resolves conflicting outputs,
+          holds the confirmation gate, and owns recovery when a step fails.
+        </p>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="layer">
+        <div class="lbl">Specialist agents · dynamically selected</div>
+        <div class="agentgrid">
+          <div class="agent primary"><b>Payment</b><span>Bills, transfers, recipients, transaction preparation.</span></div>
+          <div class="agent"><b>Fraud</b><span>Scam indicators, unusual patterns, transaction risk.</span></div>
+          <div class="agent"><b>KYC</b><span>Identity and verification requirements satisfied or not.</span></div>
+          <div class="agent"><b>Verification</b><span>Does the planned action match the original request?</span></div>
+          <div class="agent"><b>SME</b><span>Merchant and small-business financial analysis.</span></div>
+          <div class="agent"><b>Loan</b><span>Application structuring and missing-requirement detection.</span></div>
+          <div class="agent"><b>Support</b><span>Categorize, diagnose, resolve, escalate.</span></div>
+          <div class="agent ghost" style="background:transparent; border-style:dashed"><b style="color:var(--faint)">Extensible</b><span>New domains attach to the same supervisor and tool layer.</span></div>
+        </div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="layer">
+        <div class="lbl">Governed tool &amp; API layer</div>
+        <div class="railrow">
+          <span class="rail">payment execution</span>
+          <span class="rail">biller lookup</span>
+          <span class="rail">account &amp; balance</span>
+          <span class="rail">recipient directory</span>
+          <span class="rail">risk signals</span>
+          <span class="rail">document extraction</span>
+          <span class="rail">ticketing</span>
+        </div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="sidebars">
+        <div class="layer">
+          <div class="lbl">Shared memory &amp; context</div>
+          <p style="font-size:.83rem; color:var(--muted)">User profile, recipients, prior transactions, open cases and session state — one source of truth every agent reads and writes.</p>
+        </div>
+        <div class="layer">
+          <div class="lbl">Safety &amp; permission control</div>
+          <p style="font-size:.83rem; color:var(--muted)">Risk thresholds, confirmation gates, blocked-action rules, escalation routes, and a full decision trace per request.</p>
+        </div>
+      </div>
+
+    </div>
+    <p class="note">JEV is the routing layer's name in this architecture; it is described here by function only, so the internal definition stays authoritative.</p>
+  </div>
+</section>
+
+<!-- 6 · WORKFLOW -->
+<section id="workflow">
+  <div class="wrap">
+    <div class="eyebrow">05 — Example end-to-end workflow</div>
+    <h2>A high-value transfer, in full.</h2>
+    <div class="card" style="margin-top:24px; display:flex; align-items:baseline; gap:16px; flex-wrap:wrap">
+      <span class="tag">User</span>
+      <p class="ar" style="font-size:1.12rem">حوّل مليون دينار لهذا الحساب.</p>
+      <p style="font-size:.82rem; color:var(--faint)">“Transfer one million dinars to this account.”</p>
+    </div>
+
+    <div class="steps" style="margin-top:14px">
+      <div class="step"><div class="who">JEV</div><div class="what"><b>Sensitive action · multi-agent · confirmation required</b><p>Intent is a transfer, the amount is above the risk threshold, and the recipient is not a known contact. Routes to the supervisor with a full-pipeline flag.</p></div></div>
+      <div class="step"><div class="who">Supervisor</div><div class="what"><b>Plans the chain</b><p>Payment → Fraud → KYC → Verification → confirmation gate → execution.</p></div></div>
+      <div class="step"><div class="who">Payment</div><div class="what"><b>Prepares the transaction</b><p>Resolves the account, checks balance and limits, assembles amount, currency, recipient and reference. Flags that the recipient is new.</p></div></div>
+      <div class="step"><div class="who">Fraud</div><div class="what"><b>Scores the risk</b><p>New recipient, high value, first-time pattern. Elevated but not blocking — returns the reasons, not just a score.</p></div></div>
+      <div class="step"><div class="who">KYC</div><div class="what"><b>Checks the threshold</b><p>Confirms the user's verification tier permits this amount. If not, it returns exactly which requirement is missing.</p></div></div>
+      <div class="step"><div class="who">Verify</div><div class="what"><b>Re-reads the original request</b><p>Compares the prepared transaction field by field against what the user actually said. Any mismatch stops the chain here.</p></div></div>
+      <div class="step gate"><div class="who">Gate</div><div class="what"><b>Explicit user confirmation</b><p>The user is shown the recipient, amount and fraud reasoning in Iraqi Arabic and must approve. No approval, no execution.</p></div></div>
+      <div class="step"><div class="who">Tool</div><div class="what"><b>Executes against the payment rail</b><p>Idempotent call with a request key, so a retry can never produce a second transfer.</p></div></div>
+      <div class="step"><div class="who">Result</div><div class="what"><b>Confirms or recovers</b><p>Reads the settled state back from the rail and reports it. On timeout it checks status before retrying; on failure it explains the cause and offers the next step.</p></div></div>
+    </div>
+    <p class="note">The same chain contracts for low-risk requests: a 10,000 IQD transfer to a saved contact skips fraud escalation and the confirmation gate, and executes in one hop.</p>
+  </div>
+</section>
+
+<!-- 7 · PLATFORM -->
+<section id="platform">
+  <div class="wrap">
+    <div class="eyebrow">06 — Six-agent platform</div>
+    <h2>One architecture, six financial domains.</h2>
+    <p class="lede">All six run on the same supervisor, the same memory, and the same tool layer. One is built and evaluated for this hackathon; the rest prove the expansion path.</p>
+    <div class="grid g3" style="margin-top:28px">
+      <div class="card" style="border-color:var(--accent-line); background:var(--accent-soft)">
+        <span class="tag primary" style="margin-bottom:12px">Primary · evaluated</span>
+        <h3>Bill Pay &amp; Transfer Agent</h3>
+        <p>Understands the goal in dialect, prepares and verifies the transaction, executes under permission control, and recovers from failure.</p>
+      </div>
+      <div class="card"><span class="tag" style="margin-bottom:12px">Architecture</span><h3>Fraud &amp; Scam Protection</h3><p>Detects scam patterns, OTP-sharing pressure, unusual recipients and out-of-profile transaction behaviour.</p></div>
+      <div class="card"><span class="tag" style="margin-bottom:12px">Architecture</span><h3>KYC Document Agent</h3><p>Reads submitted identity documents, checks completeness against tier requirements, and names what is missing.</p></div>
+      <div class="card"><span class="tag" style="margin-bottom:12px">Architecture</span><h3>SME &amp; Merchant Assistant</h3><p>Cash-flow questions, settlement summaries and business-level financial analysis for merchants.</p></div>
+      <div class="card"><span class="tag" style="margin-bottom:12px">Architecture</span><h3>AI Loan Officer</h3><p>Collects and structures application data, detects missing requirements, and prepares a reviewable file.</p></div>
+      <div class="card"><span class="tag" style="margin-bottom:12px">Architecture</span><h3>Support Pipeline Automation</h3><p>Categorizes the problem, diagnoses common cases, drafts the resolution, and escalates with full context.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 · AUTONOMY LOOP -->
+<section id="autonomy">
+  <div class="wrap">
+    <div class="eyebrow">07 — Autonomous decision loop</div>
+    <h2>Agentic, not conversational.</h2>
+    <p class="lede">The system does not answer a question and stop. It runs a loop until the goal is complete, blocked, or escalated.</p>
+    <div class="loop" style="margin-top:28px">
+      <div class="mini"><i>01</i>Observe<em>Goal, context, history</em></div>
+      <div class="mini"><i>02</i>Understand<em>Intent + entities</em></div>
+      <div class="mini"><i>03</i>Plan<em>Steps and order</em></div>
+      <div class="mini"><i>04</i>Select agents<em>One or several</em></div>
+      <div class="mini"><i>05</i>Act<em>Tools and APIs</em></div>
+      <div class="mini"><i>06</i>Verify<em>Match to request</em></div>
+      <div class="mini"><i>07</i>Recover<em>Retry, ask, escalate</em></div>
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card">
+        <h3>The AI acts on its own to…</h3>
+        <p>understand goals · create plans · choose agents · retrieve information · call tools · validate data · detect its own failures · retry safe, idempotent operations · route and escalate cases · verify results.</p>
+      </div>
+      <div class="card" style="border-color:var(--amber-line); background:var(--amber-soft)">
+        <h3>It stops and asks when…</h3>
+        <p>the action moves money above a threshold · the recipient is new or ambiguous · the operation is irreversible · fraud or KYC signals are elevated · agents disagree · the user's intent has more than one plausible reading.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 · SAFETY -->
+<section id="safety">
+  <div class="wrap">
+    <div class="eyebrow">08 — Safety &amp; human control</div>
+    <h2>Autonomy with explicit permission boundaries.</h2>
+    <p class="lede">Autonomy is a property of each action, not of the system as a whole. Nothing irreversible happens without an authorization path.</p>
+    <div class="tbl-wrap" style="margin-top:26px">
+      <table class="tbl">
+        <thead><tr><th>Action</th><th>Autonomy level</th><th>Control</th></tr></thead>
+        <tbody>
+          <tr><td>Read balance, bills, history</td><td>Fully autonomous</td><td>Logged in the decision trace</td></tr>
+          <tr><td>Resolve recipient or biller</td><td>Autonomous, verified</td><td>Match shown back to the user</td></tr>
+          <tr><td>Prepare a transaction</td><td>Autonomous</td><td>Nothing executes at this stage</td></tr>
+          <tr><td>Low-value transfer, saved recipient</td><td>Autonomous within limits</td><td>Per-user limits and daily caps</td></tr>
+          <tr><td>High-value or new-recipient transfer</td><td>Requires confirmation</td><td>Explicit user approval before execution</td></tr>
+          <tr><td>Elevated fraud signal</td><td>Held</td><td>Reasons shown; user may confirm or abandon</td></tr>
+          <tr><td>KYC requirement unmet</td><td>Blocked</td><td>Missing requirement named; routed to KYC flow</td></tr>
+          <tr><td>Suspected scam pattern (OTP, coercion)</td><td>Blocked</td><td>Warned and escalated, not executed</td></tr>
+          <tr><td>Irreversible or out-of-policy operation</td><td>Human review</td><td>Escalated with full context</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid g3" style="margin-top:14px">
+      <div class="ar-card">
+        <p class="ar">هذا الرقم ديتصل بيّ ويگلي انطيه رمز الـOTP.</p>
+        <p class="route">→ fraud agent · block + educate</p>
+        <p class="gloss">Recognized as an OTP-sharing scam. The system never assists the request, warns the user, and escalates.</p>
+      </div>
+      <div class="card"><h3>Decision trace</h3><p>Every request stores which agents ran, what each returned, why the route was chosen, and what the user approved — reviewable after the fact.</p></div>
+      <div class="card"><h3>Idempotent execution</h3><p>Payment calls carry a request key. Retries after a timeout reconcile against the rail instead of issuing a second transfer.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 · FAILURE CASES -->
+<section id="failures">
+  <div class="wrap">
+    <div class="eyebrow">09 — Failure handling</div>
+    <h2>Designed around the cases that actually occur.</h2>
+    <div class="tbl-wrap" style="margin-top:26px">
+      <table class="tbl">
+        <thead><tr><th>Failure</th><th>System response</th></tr></thead>
+        <tbody>
+          <tr><td class="wrap-ok">Ambiguous request</td><td>Asks one targeted clarifying question instead of guessing — never resolves ambiguity by assumption on a payment.</td></tr>
+          <tr><td class="wrap-ok">Wrong or unresolved recipient</td><td>Presents candidate matches with distinguishing detail; requires selection before preparing the transaction.</td></tr>
+          <tr><td class="wrap-ok">Missing payment information</td><td>Names the specific missing field and requests only that, preserving everything already gathered.</td></tr>
+          <tr><td class="wrap-ok">Suspected scam</td><td>Blocks, explains the pattern in the user's dialect, and escalates rather than completing the action.</td></tr>
+          <tr><td class="wrap-ok">Insufficient KYC</td><td>Stops before execution, states the exact unmet requirement, and hands off to the KYC flow.</td></tr>
+          <tr><td class="wrap-ok">Payment API unavailable</td><td>Reports honestly, offers to retry, and never reports a success it could not confirm.</td></tr>
+          <tr><td class="wrap-ok">Duplicate transaction</td><td>Detected by request key and recent-transaction check; surfaced to the user instead of executed twice.</td></tr>
+          <tr><td class="wrap-ok">Conflicting agent decisions</td><td>Supervisor applies precedence — safety agents override convenience — and escalates when the conflict is unresolvable.</td></tr>
+          <tr><td class="wrap-ok">Tool timeout</td><td>Status is reconciled before any retry; ambiguous outcomes escalate rather than repeat.</td></tr>
+          <tr><td class="wrap-ok">Unsupported request</td><td>Declines clearly and routes to the correct channel instead of improvising a partial action.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 11 · EVALUATION -->
+<section id="evaluation">
+  <div class="wrap">
+    <div class="eyebrow">10 — Evaluation</div>
+    <h2>How we will prove it works.</h2>
+    <p class="lede">
+      The metrics below are <b style="color:var(--ink)">targets to measure</b>, not results already achieved. Scores will be
+      reported against a held-out test set the system does not see during development.
+    </p>
+
+    <div class="tbl-wrap" style="margin-top:26px">
+      <table class="tbl">
+        <thead><tr><th>Metric to measure</th><th>What it tells us</th></tr></thead>
+        <tbody>
+          <tr><td>Intent routing accuracy</td><td>JEV sends the request down the right path.</td></tr>
+          <tr><td>Correct agent selection</td><td>The supervisor picks the right agents — and no unnecessary ones.</td></tr>
+          <tr><td>Task completion rate</td><td>Stated goals that reach a correct terminal state.</td></tr>
+          <tr><td>Transaction information accuracy</td><td>Amount, recipient, biller and reference are exactly right.</td></tr>
+          <tr><td>Iraqi Arabic understanding accuracy</td><td>Dialect, slang and half-sentences are parsed as intended.</td></tr>
+          <tr><td>Fraud detection rate</td><td>Seeded scam cases caught before execution.</td></tr>
+          <tr><td>Unsafe-action blocking rate</td><td>Actions that should never execute, never execute.</td></tr>
+          <tr><td>False-positive rate</td><td>Legitimate requests not wrongly blocked or escalated.</td></tr>
+          <tr><td>Tool-call success rate</td><td>Well-formed calls and correct handling of tool errors.</td></tr>
+          <tr><td>Escalation accuracy</td><td>Cases escalate when they should — and only then.</td></tr>
+          <tr><td>End-to-end success rate</td><td>Goal to verified result, measured on unseen cases.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card">
+        <h3>Held-out test set</h3>
+        <p>A set of Iraqi Arabic financial requests — including adversarial, ambiguous and scam cases — written separately and withheld during development. Reported numbers come from this set, not from examples the system was tuned on.</p>
+      </div>
+      <div class="card">
+        <h3>Synthetic data, no real customers</h3>
+        <p style="margin-bottom:12px">All development and testing runs on generated data. No real customer financial data is required.</p>
+        <div class="railrow">
+          <span class="rail">fictional customers</span>
+          <span class="rail">synthetic transactions</span>
+          <span class="rail">merchant profiles</span>
+          <span class="rail">synthetic bills</span>
+          <span class="rail">mock KYC documents</span>
+          <span class="rail">simulated fraud cases</span>
+          <span class="rail">support tickets</span>
+          <span class="rail">Iraqi Arabic conversations</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 · SCOPE -->
+<section id="scope">
+  <div class="wrap">
+    <div class="eyebrow">11 — Scope</div>
+    <h2>What we build now, and what comes next.</h2>
+    <div class="scope" style="margin-top:26px">
+      <div class="card now">
+        <span class="tag primary" style="margin-bottom:12px">Hackathon build</span>
+        <h3>Bill Pay &amp; Transfer, built deeply</h3>
+        <ul>
+          <li>Iraqi Arabic intent understanding for payments and transfers</li>
+          <li>JEV routing and supervisor planning</li>
+          <li>Payment, Fraud, KYC and Verification agents in the live chain</li>
+          <li>Confirmation gates and blocked-action rules</li>
+          <li>Failure recovery, retries and escalation</li>
+          <li>Measured against the held-out test set</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="tag" style="margin-bottom:12px">Expansion path</span>
+        <h3>The remaining agents</h3>
+        <ul>
+          <li>SME, Loan and Support agents are specified against the same architecture</li>
+          <li>They reuse the supervisor, JEV layer, shared memory and tool layer unchanged</li>
+          <li>Adding a domain means adding an agent and its tools — not a new system</li>
+          <li>Each new agent inherits the same safety and permission controls</li>
+        </ul>
+      </div>
+    </div>
+    <blockquote class="statement" style="margin-top:26px">
+      We deeply build and evaluate the payment and transfer workflow first. The remaining agents share the same
+      architecture and demonstrate the platform's expansion path.
+    </blockquote>
+  </div>
+</section>
+
+<!-- CLOSING -->
+<section class="closing">
+  <div class="wrap">
+    <div class="eyebrow">Closing</div>
+    <p>
+      Financial software in Iraq should understand how Iraqis actually speak, and act on what they actually mean —
+      safely, and end to end. We are building the autonomous layer that does it: one goal, one orchestrator,
+      many agents, one verified action.
+    </p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap row">
+    <span>Radiant · Agentic AI Iraq Hackathon</span>
+    <span>Primary challenge: Bill Pay &amp; Transfer Agent · Synthetic data only · Metrics are targets to measure</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('.nav a'));
+  var map = {};
+  links.forEach(function(a){ var el = document.querySelector(a.getAttribute('href')); if(el) map[el.id] = a; });
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){ a.classList.remove('on'); });
+        if(map[e.target.id]) map[e.target.id].classList.add('on');
+      }
+    });
+  }, { rootMargin:'-45% 0px -50% 0px' });
+  Object.keys(map).forEach(function(id){ obs.observe(document.getElementById(id)); });
+})();
+</script>
+</body>
+</html>

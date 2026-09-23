@@ -1,0 +1,9 @@
+# Local Claude Code settings — machine-specific paths, not project config
+.claude/
+**/.claude/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*~
