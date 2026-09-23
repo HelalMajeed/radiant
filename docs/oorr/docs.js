@@ -187,7 +187,7 @@
     attachCopy(wrap);
   });
 
-  /* -------------------------------------------------------------- mobile nav */
+  /* ----------------------------------------------------------- mobile drawer */
 
   var toggle = $('#navtoggle');
   var sidebar = $('#sidebar');
@@ -195,39 +195,42 @@
 
   function isCompact() { return window.matchMedia(COMPACT).matches; }
 
-  function setNav(open) {
-    if (!sidebar || !toggle) return;
-    sidebar.hidden = !open;
-    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-  }
-
-  // Desktop must never inherit the collapsed state: the sidebar is permanent
-  // there, so `hidden` is cleared whenever we leave the compact breakpoint.
-  function syncNav() {
-    if (!sidebar) return;
-    if (isCompact()) setNav(false);
-    else { sidebar.hidden = false; if (toggle) toggle.setAttribute('aria-expanded', 'false'); }
-  }
-
   if (toggle && sidebar) {
+    var scrim = document.createElement('div');
+    scrim.className = 'scrim';
+    document.body.appendChild(scrim);
+
+    var setNav = function (open) {
+      sidebar.classList.toggle('is-open', open);
+      scrim.classList.toggle('is-open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      // Stop the page behind the drawer from scrolling under the finger.
+      document.body.style.overflow = open ? 'hidden' : '';
+    };
+
+    // Leaving the compact breakpoint must not strand the page in the drawer's
+    // state: the sidebar is permanent on desktop, so everything is reset.
+    var syncNav = function () {
+      if (!isCompact()) setNav(false);
+    };
+
     toggle.addEventListener('click', function () {
-      setNav(sidebar.hidden);
+      setNav(!sidebar.classList.contains('is-open'));
     });
 
+    scrim.addEventListener('click', function () { setNav(false); });
+
+    // A link navigates to a real page, so the drawer closing is incidental —
+    // but it matters for the current page's own link.
     sidebar.addEventListener('click', function (e) {
       if (e.target.closest('a') && isCompact()) setNav(false);
     });
 
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && isCompact() && !sidebar.hidden) {
+      if (e.key === 'Escape' && sidebar.classList.contains('is-open')) {
         setNav(false);
         toggle.focus();
       }
-    });
-
-    document.addEventListener('click', function (e) {
-      if (!isCompact() || sidebar.hidden) return;
-      if (!sidebar.contains(e.target) && !toggle.contains(e.target)) setNav(false);
     });
 
     var mq = window.matchMedia(COMPACT);
@@ -235,37 +238,61 @@
     syncNav();
   }
 
-  /* -------------------------------------------------------------- scroll-spy */
+  /* ------------------------------------------------------------ on this page
+     Each sidebar entry is now its own page, so the sidebar's current item is
+     rendered server-side. What remains useful is a rail for the headings
+     WITHIN a page, built here from the article's own h3s. */
 
-  var links = $$('.sb-list a[href^="#"]');
-  var sections = links
-    .map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); })
-    .filter(Boolean);
+  var toc = $('#toc');
+  var headings = $$('.prose h3').filter(function (h) { return h.textContent.trim() !== ''; });
 
-  if (sections.length) {
-    // Position-based rather than intersection-based: the deepest section whose
-    // heading has passed the reading line wins. Intersection sets tie-break by
-    // document order, which lets a long preceding section stay marked after the
-    // next one is already at the top of the screen.
-    // Viewport-relative so the marker is forgiving of where a jump actually
-    // lands (smooth scrolling eases, and an in-flight scroll can sit well short
-    // of the anchor) without running so deep that it claims the next section
-    // while its heading is still off screen.
+  function slugify(text, index) {
+    var base = text
+      .toLowerCase()
+      .replace(/[^a-z0-9؀-ۿ]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    return base || 'section-' + index;
+  }
+
+  // Two entries is the point at which a contents rail earns its space.
+  if (toc && headings.length >= 2) {
+    var seen = Object.create(null);
+    var list = document.createElement('ul');
+
+    headings.forEach(function (h, i) {
+      if (!h.id) {
+        var slug = slugify(h.textContent, i);
+        while (seen[slug]) slug += '-' + i;   // ids must stay unique
+        seen[slug] = true;
+        h.id = slug;
+      }
+      var li = document.createElement('li');
+      var a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent.trim();
+      li.appendChild(a);
+      list.appendChild(li);
+    });
+
+    var title = document.createElement('p');
+    title.className = 'toc-title';
+    title.textContent = 'On this page';
+    toc.appendChild(title);
+    toc.appendChild(list);
+    toc.classList.add('is-active');
+
+    var links = $$('a', toc);
     var readingLine = function () { return Math.max(110, window.innerHeight * 0.3); };
 
     var mark = function () {
-      var current = sections[0];
+      var current = headings[0];
       var line = readingLine();
-
-      for (var i = 0; i < sections.length; i++) {
-        if (sections[i].getBoundingClientRect().top <= line) current = sections[i];
+      for (var i = 0; i < headings.length; i++) {
+        if (headings[i].getBoundingClientRect().top <= line) current = headings[i];
       }
-
-      // At the very bottom the last section may never reach the reading line
-      // (it is shorter than the viewport), so claim it explicitly.
       var atBottom = window.innerHeight + window.scrollY >=
         document.documentElement.scrollHeight - 2;
-      if (atBottom) current = sections[sections.length - 1];
+      if (atBottom) current = headings[headings.length - 1];
 
       links.forEach(function (a) {
         a.classList.toggle('is-current', a.getAttribute('href') === '#' + current.id);
@@ -281,10 +308,10 @@
 
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
-    // Smooth scrolling keeps moving after the click, so re-check once it lands.
     links.forEach(function (a) {
       a.addEventListener('click', function () { setTimeout(mark, 700); });
     });
     mark();
   }
+
 })();

@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>API Reference — OORR AI · Radiant</title>
+<meta name="description" content="Request parameters, response structure, token usage, error codes and rate limits.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="../../../assets/favicon.png">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wash" aria-hidden="true"></div>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <a class="brand" href="../../../">
+    <img src="../../../assets/radiant-mark.png" alt="" draggable="false">
+    <b>Radiant</b>
+  </a>
+  <span class="crumb">Docs&nbsp; / &nbsp;<em>OORR AI</em></span>
+  <div class="topbar-end">
+    <a class="ghost-link" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      Menu
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar" id="sidebar" aria-label="Documentation">
+    <p class="sb-title">OORR AI</p>
+    <ul class="sb-list">
+      <li><a href="../">Introduction</a></li>
+      <li><a href="../quickstart/">Quickstart</a></li>
+      <li><a href="../authentication/">Authentication</a></li>
+      <li><a href="../models/">Models</a></li>
+      <li><a href="../chat/">Chat</a></li>
+      <li><a href="../vision/">Vision</a></li>
+      <li><a href="../api-reference/" class="is-current" aria-current="page">API Reference</a></li>
+      <li><a href="../pricing/">Pricing</a></li>
+      <li><a href="../usage/">Usage</a></li>
+      <li><a href="../api-keys/">API Keys</a></li>
+    </ul>
+    <p class="sb-title">Status legend</p>
+    <ul class="sb-legend">
+      <li><span class="pill pill--live">Live</span></li>
+      <li><span class="pill pill--pending">Pending</span></li>
+      <li><span class="pill pill--ui">UI only</span></li>
+    </ul>
+  </nav>
+
+  <main class="content" id="main">
+    <article class="prose">
+      <div class="page-head">
+        <p class="eyebrow">OORR AI</p>
+        <h1>API Reference <span class="pill pill--live">Live</span></h1>
+      </div>
+
+<h3>Request parameters</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>userId</code></td><td>string</td><td>Yes</td><td>Non-empty, ≤ 128 chars. Keys rate limit, daily allowance and usage rows. Not authenticated.</td></tr>
+            <tr><td><code>message</code></td><td>string</td><td>Yes</td><td>Non-empty, ≤ 12,000 characters.</td></tr>
+            <tr><td><code>plan</code></td><td>string</td><td>Yes</td><td><code>normal</code> or <code>premium</code>. Validated, then normalised to <code>normal</code> server-side — it cannot grant a paid tier.</td></tr>
+            <tr><td><code>modelTier</code></td><td>string</td><td>No</td><td><code>basic</code> | <code>pro</code> | <code>ultra</code>. Defaults to <code>basic</code>.</td></tr>
+            <tr><td><code>subject</code></td><td>string</td><td>No</td><td>≤ 100 chars. Scopes the tutor prompt.</td></tr>
+            <tr><td><code>grade</code></td><td>string</td><td>No</td><td>≤ 100 chars. The student's stage.</td></tr>
+            <tr><td><code>conversationId</code></td><td>string</td><td>No</td><td>≤ 128 chars. Groups turns of one chat.</td></tr>
+            <tr><td><code>complexity</code></td><td>string</td><td>No</td><td><code>normal</code> or <code>complex</code>. Legacy; prefer <code>modelTier</code>.</td></tr>
+            <tr><td><code>history</code></td><td>array</td><td>No</td><td>Prior turns of the same chat: <code>{ role: "user" | "assistant", content: string }</code>. Bounded and validated; never stored or logged. Excludes the current question.</td></tr>
+            <tr><td><code>image</code></td><td>object</td><td>No</td><td>See <a href="../vision/">Vision</a>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note note--warn">
+        <p class="note-title">Two quirks worth knowing</p>
+        <p>
+          <code>plan</code> is <strong>required by the validator</strong> even though
+          the server immediately normalises it to <code>normal</code>. Omitting it is a
+          <code>400</code>, so send <code>"plan": "normal"</code> and select capability
+          with <code>modelTier</code>.
+        </p>
+        <p>
+          Unrecognised fields in the request body are ignored. There is no field that
+          selects or influences how Sargon 1.5 executes your request.
+        </p>
+      </div>
+
+      <h3>Response structure</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>answer</code></td><td>string</td><td>The tutor's answer, in Arabic unless an English-book policy applies.</td></tr>
+            <tr><td><code>model</code></td><td>string</td><td>The public model identifier. Always <code>sargon-1.5</code>.</td></tr>
+            <tr><td><code>inputTokens</code></td><td>number</td><td>Optional — present when a token count is reported for the request.</td></tr>
+            <tr><td><code>outputTokens</code></td><td>number</td><td>Optional — present when a token count is reported for the request.</td></tr>
+            <tr><td><code>totalTokens</code></td><td>number</td><td>Optional. The figure used for daily allowance accounting.</td></tr>
+            <tr><td><code>latencyMs</code></td><td>number</td><td>Server-side duration.</td></tr>
+            <tr><td><code>requestId</code></td><td>string</td><td>UUID. Quote it in support requests.</td></tr>
+            <tr><td><code>modelTier</code></td><td>string</td><td>Optional. The tier that served the request.</td></tr>
+            <tr><td><code>proTrial</code></td><td>object</td><td>Optional. Remaining Pro trial quota, for <code>pro</code> requests.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Token usage</h3>
+      <p>
+        Token counts come back on every successful response and, for streaming, on the
+        terminal <code>done</code> event. Each request is also metered server-side —
+        <code>inputTokens</code>, <code>outputTokens</code>, <code>totalTokens</code>,
+        <code>latencyMs</code>, success, and the request type
+        (<code>text</code>, <code>vision</code>, <code>math_ocr</code>,
+        <code>premium_reasoning</code>).
+      </p>
+      <p>
+        Usage rows never contain prompts, questions, answers, image data or credentials.
+        Aggregation resets daily on the <strong>Asia/Baghdad</strong> calendar day.
+      </p>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">Token fields on a response</span></div>
+        <pre><code>{
+  "inputTokens": 412,
+  "outputTokens": 735,
+  "totalTokens": 1147
+}</code></pre>
+      </div>
+      <div class="note note--warn">
+        <p class="note-title">These counts are recorded, not yet priced</p>
+        <p>
+          Token accounting is real and persisted. Converting it into a monetary amount
+          is <strong>not implemented</strong> in the service — no cost field is computed,
+          stored or returned. See <a href="../pricing/">Pricing</a>.
+        </p>
+      </div>
+
+      <h3>Error responses</h3>
+      <p>Every failure returns a stable <code>code</code>, an Arabic <code>error</code> message safe to show a student, and a <code>requestId</code>.</p>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">429 Too Many Requests</span></div>
+        <pre><code>{
+  "error": "لقد أرسلت سؤالاً للتو. انتظر قليلاً قبل إرسال سؤال جديد.",
+  "code": "RATE_LIMITED",
+  "retryAfterSeconds": 27,
+  "requestId": "0f4c1b86-27a1-4f1e-9d0a-2b7c6e5a1d33"
+}</code></pre>
+      </div>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Code</th><th>HTTP</th><th>Cause</th></tr></thead>
+          <tbody>
+            <tr><td><code>INVALID_REQUEST</code></td><td>400</td><td>Validation failed: missing or malformed field, message too long, unsupported image type, image too large.</td></tr>
+            <tr><td><code>CONTENT_BLOCKED</code></td><td>422</td><td>The request was refused on safety grounds. Rephrase.</td></tr>
+            <tr><td><code>RATE_LIMITED</code></td><td>429</td><td>Per-caller cooldown not yet elapsed. Honour <code>Retry-After</code>.</td></tr>
+            <tr><td><code>DAILY_LIMIT_REACHED</code></td><td>429</td><td>Daily token allowance exhausted. Resets 00:00 Asia/Baghdad.</td></tr>
+            <tr><td><code>PRO_TRIAL_LIMIT_REACHED</code></td><td>429</td><td>Pro trial quota exhausted. Includes <code>proTrial</code> and <code>retryAfterSeconds</code>.</td></tr>
+            <tr><td><code>PRO_UNAVAILABLE</code></td><td>503</td><td>Pro tier cannot be served right now. Fall back to <code>basic</code>.</td></tr>
+            <tr><td><code>ULTRA_UNAVAILABLE</code></td><td>503</td><td><code>ultra</code> is not released. Never downgraded silently.</td></tr>
+            <tr><td><code>PROVIDER_UNAVAILABLE</code></td><td>503</td><td>The service could not produce an answer for this request. Retry with backoff.</td></tr>
+            <tr><td><code>INTERNAL_ERROR</code></td><td>500</td><td>Unexpected server fault. Retry with backoff; quote the <code>requestId</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Rate limits</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Limit</th><th>Value</th><th>Scope</th><th>On breach</th></tr></thead>
+          <tbody>
+            <tr><td>Request cooldown</td><td>1 request / 30 s</td><td>Per <code>userId</code></td><td><code>429 RATE_LIMITED</code> + <code>Retry-After</code></td></tr>
+            <tr><td>Daily tokens</td><td>100,000 (default)</td><td>Per <code>userId</code>, per Baghdad day</td><td><code>429 DAILY_LIMIT_REACHED</code></td></tr>
+            <tr><td>Message length</td><td>12,000 characters</td><td>Per request</td><td><code>400 INVALID_REQUEST</code></td></tr>
+            <tr><td>Image size</td><td>10 MiB decoded</td><td>Per request</td><td><code>400 INVALID_REQUEST</code></td></tr>
+            <tr><td>Pro tier</td><td>Trial quota</td><td>Per <code>userId</code></td><td><code>429 PRO_TRIAL_LIMIT_REACHED</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The cooldown is enforced atomically and persists across restarts. It is
+        reserved once per accepted request, so an internal retry still
+        counts as a single request. The server is the single source of truth for the
+        pace — mirror <code>Retry-After</code> rather than hard-coding an interval, and
+        note that a cooldown storage fault <strong>denies</strong> the request rather
+        than letting it through.
+      </p>
+
+      <h4>Handling 429 correctly</h4>
+      <div class="codewrap" data-tabs>
+        <div class="codehead">
+          <div class="tabs" role="tablist" aria-label="Retry language">
+            <button class="tab" type="button" role="tab" aria-selected="true">TypeScript</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">Python</button>
+          </div>
+        </div>
+        <pre role="tabpanel"><code>async function askWithRetry(body: unknown, attempts = 3) {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const res = await fetch("https://api.oorr.ai/api/tutor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) return res.json();
+
+    const err = await res.json();
+
+    // Never retry a validation or safety failure — it will fail identically.
+    if (err.code === "INVALID_REQUEST" || err.code === "CONTENT_BLOCKED") {
+      throw new Error(`${err.code}: ${err.error}`);
+    }
+
+    // Obey the server's pace; fall back to the header, then a sane default.
+    const wait = err.retryAfterSeconds
+      ?? Number(res.headers.get("Retry-After"))
+      ?? 30;
+
+    if (attempt === attempts) throw new Error(`${err.code} after ${attempts} attempts`);
+    await new Promise((r) => setTimeout(r, wait * 1000));
+  }
+}</code></pre>
+        <pre role="tabpanel" hidden><code>import time
+import requests
+
+NO_RETRY = {"INVALID_REQUEST", "CONTENT_BLOCKED"}
+
+def ask_with_retry(body, attempts=3):
+    for attempt in range(1, attempts + 1):
+        res = requests.post(
+            "https://api.oorr.ai/api/tutor", json=body, timeout=90
+        )
+        if res.ok:
+            return res.json()
+
+        err = res.json()
+        if err.get("code") in NO_RETRY:
+            raise RuntimeError(f"{err['code']}: {err['error']}")
+
+        wait = err.get("retryAfterSeconds") or int(
+            res.headers.get("Retry-After", 30)
+        )
+        if attempt == attempts:
+            raise RuntimeError(f"{err.get('code')} after {attempts} attempts")
+        time.sleep(wait)</code></pre>
+      </div>
+
+      <nav class="pager" aria-label="Documentation pages">
+        <a class="pager-link pager-prev" href="../vision/"><span>Previous</span><b>Vision</b></a>
+        <a class="pager-link pager-next" href="../pricing/"><span>Next</span><b>Pricing</b></a>
+      </nav>
+    </article>
+
+    <aside class="toc" id="toc" aria-label="On this page"></aside>
+  </main>
+</div>
+
+<footer class="docfoot">
+  <span>OORR AI API</span>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="../../../">Radiant</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://radiant-iraq.com" target="_blank" rel="noopener">radiant-iraq.com</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+</footer>
+
+<script src="../docs.js"></script>
+</body>
+</html>

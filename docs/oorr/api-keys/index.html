@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>API Keys — OORR AI · Radiant</title>
+<meta name="description" content="Create, mask, rename and revoke OORR AI API keys.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="../../../assets/favicon.png">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wash" aria-hidden="true"></div>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <a class="brand" href="../../../">
+    <img src="../../../assets/radiant-mark.png" alt="" draggable="false">
+    <b>Radiant</b>
+  </a>
+  <span class="crumb">Docs&nbsp; / &nbsp;<em>OORR AI</em></span>
+  <div class="topbar-end">
+    <a class="ghost-link" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      Menu
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar" id="sidebar" aria-label="Documentation">
+    <p class="sb-title">OORR AI</p>
+    <ul class="sb-list">
+      <li><a href="../">Introduction</a></li>
+      <li><a href="../quickstart/">Quickstart</a></li>
+      <li><a href="../authentication/">Authentication</a></li>
+      <li><a href="../models/">Models</a></li>
+      <li><a href="../chat/">Chat</a></li>
+      <li><a href="../vision/">Vision</a></li>
+      <li><a href="../api-reference/">API Reference</a></li>
+      <li><a href="../pricing/">Pricing</a></li>
+      <li><a href="../usage/">Usage</a></li>
+      <li><a href="../api-keys/" class="is-current" aria-current="page">API Keys</a></li>
+    </ul>
+    <p class="sb-title">Status legend</p>
+    <ul class="sb-legend">
+      <li><span class="pill pill--live">Live</span></li>
+      <li><span class="pill pill--pending">Pending</span></li>
+      <li><span class="pill pill--ui">UI only</span></li>
+    </ul>
+  </nav>
+
+  <main class="content" id="main">
+    <article class="prose">
+      <div class="page-head">
+        <p class="eyebrow">OORR AI</p>
+        <h1>API Keys <span class="pill pill--ui">UI only</span></h1>
+      </div>
+
+<div class="note note--warn">
+        <p class="note-title">Key management is not implemented — nothing here issues a real key</p>
+        <p>
+          The deployed OORR backend has no key store, no key generation, no bearer
+          validation and no revocation. The dashboard below is a non-functional
+          interface shell: its <strong>Create API key</strong> button is disabled and it
+          lists no keys, because a working key cannot be produced from this page. A page
+          that appeared to mint a key would be issuing a credential that authenticates
+          nothing.
+        </p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Your API keys</h3>
+          <span class="pill pill--pending">Awaiting backend</span>
+        </div>
+        <p style="color:var(--mute-2);font-size:13px;margin:0 0 16px">
+          Requires <code>POST /api/keys</code> and <code>GET /api/keys</code>.
+        </p>
+
+        <button class="btn btn--primary" type="button" disabled
+                title="Disabled: no key-issuing endpoint exists">
+          Create API key
+        </button>
+
+        <div class="keys" aria-label="Existing keys (illustrative layout)">
+          <div class="keyrow" aria-hidden="true">
+            <div class="keyname">Key name</div>
+            <div class="keymask">oorr_sk_live_••••••••••••••••••••••••</div>
+            <div class="keymeta">Last used —</div>
+            <div class="keyacts">
+              <button class="btn" type="button" disabled>Copy</button>
+              <button class="btn" type="button" disabled>Rename</button>
+              <button class="btn btn--danger" type="button" disabled>Revoke</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty">
+          <p>
+            No keys — and none can be created until key management ships. The row above
+            shows the intended layout, not an existing key.
+          </p>
+        </div>
+      </div>
+
+      <h3>Intended key handling <span class="pill pill--pending">Pending</span></h3>
+      <p>These are the rules the implementation is specified to follow:</p>
+      <ul>
+        <li><strong>Shown once.</strong> The full secret is returned only in the response that creates it, and is never retrievable again.</li>
+        <li><strong>Stored hashed.</strong> Only a hash is persisted, matching how the existing service already stores session tokens and one-time codes.</li>
+        <li><strong>Masked thereafter.</strong> Listings return a prefix and last four characters only — enough to tell keys apart, never enough to use one.</li>
+        <li><strong>Renameable, revocable.</strong> A label can change freely; revocation is immediate and irreversible, and a revoked key is rejected before the request is served.</li>
+        <li><strong>Attributable.</strong> Rate limits, daily allowances and usage rows key off the API key instead of a self-declared <code>userId</code>.</li>
+      </ul>
+
+      <p>
+        The "Copy" action is only meaningful at creation time, when the plaintext secret
+        is briefly in hand. For an already-listed key there is nothing to copy but the
+        mask — which is why it is disabled here rather than silently copying a useless
+        string.
+      </p>
+
+      <h4>Planned create response</h4>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">Planned — endpoint does not exist</span></div>
+        <pre><code>POST /api/keys
+{ "name": "production-server" }
+
+201 Created
+{
+  "id":        "key_9f2c1a",
+  "name":      "production-server",
+  "key":       "oorr_sk_live_7Qd2...8xKf",   // shown exactly once
+  "prefix":    "oorr_sk_live",
+  "last4":     "8xKf",
+  "createdAt": "2026-09-23T09:14:02.441Z"
+}</code></pre>
+      </div>
+
+      <h4>Planned list response</h4>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">Planned — endpoint does not exist</span></div>
+        <pre><code>GET /api/keys
+
+200 OK
+{
+  "keys": [
+    {
+      "id":         "key_9f2c1a",
+      "name":       "production-server",
+      "masked":     "oorr_sk_live_••••8xKf",
+      "createdAt":  "2026-09-23T09:14:02.441Z",
+      "lastUsedAt": "2026-09-23T11:02:55.108Z",
+      "revokedAt":  null
+    }
+  ]
+}</code></pre>
+      </div>
+
+      <div class="note">
+        <p class="note-title">Until then</p>
+        <p>
+          Call the live endpoints documented above without an
+          <code>Authorization</code> header, supplying your own <code>userId</code>.
+          Contact Radiant if you need the key layer prioritised for an integration.
+        </p>
+      </div>
+
+      <nav class="pager" aria-label="Documentation pages">
+        <a class="pager-link pager-prev" href="../usage/"><span>Previous</span><b>Usage</b></a>
+        <span></span>
+      </nav>
+    </article>
+
+    <aside class="toc" id="toc" aria-label="On this page"></aside>
+  </main>
+</div>
+
+<footer class="docfoot">
+  <span>OORR AI API</span>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="../../../">Radiant</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://radiant-iraq.com" target="_blank" rel="noopener">radiant-iraq.com</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+</footer>
+
+<script src="../docs.js"></script>
+</body>
+</html>

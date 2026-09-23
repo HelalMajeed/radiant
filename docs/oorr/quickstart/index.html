@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quickstart — OORR AI · Radiant</title>
+<meta name="description" content="Make your first OORR AI request in cURL, TypeScript or Python.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="../../../assets/favicon.png">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wash" aria-hidden="true"></div>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <a class="brand" href="../../../">
+    <img src="../../../assets/radiant-mark.png" alt="" draggable="false">
+    <b>Radiant</b>
+  </a>
+  <span class="crumb">Docs&nbsp; / &nbsp;<em>OORR AI</em></span>
+  <div class="topbar-end">
+    <a class="ghost-link" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      Menu
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar" id="sidebar" aria-label="Documentation">
+    <p class="sb-title">OORR AI</p>
+    <ul class="sb-list">
+      <li><a href="../">Introduction</a></li>
+      <li><a href="../quickstart/" class="is-current" aria-current="page">Quickstart</a></li>
+      <li><a href="../authentication/">Authentication</a></li>
+      <li><a href="../models/">Models</a></li>
+      <li><a href="../chat/">Chat</a></li>
+      <li><a href="../vision/">Vision</a></li>
+      <li><a href="../api-reference/">API Reference</a></li>
+      <li><a href="../pricing/">Pricing</a></li>
+      <li><a href="../usage/">Usage</a></li>
+      <li><a href="../api-keys/">API Keys</a></li>
+    </ul>
+    <p class="sb-title">Status legend</p>
+    <ul class="sb-legend">
+      <li><span class="pill pill--live">Live</span></li>
+      <li><span class="pill pill--pending">Pending</span></li>
+      <li><span class="pill pill--ui">UI only</span></li>
+    </ul>
+  </nav>
+
+  <main class="content" id="main">
+    <article class="prose">
+      <div class="page-head">
+        <p class="eyebrow">OORR AI</p>
+        <h1>Quickstart <span class="pill pill--live">Live</span></h1>
+      </div>
+
+<p>
+        A minimal chat request. <code>userId</code>, <code>message</code> and
+        <code>plan</code> are required; everything else is optional.
+      </p>
+
+      <div class="codewrap" data-tabs>
+        <div class="codehead">
+          <div class="tabs" role="tablist" aria-label="Quickstart language">
+            <button class="tab" type="button" role="tab" aria-selected="true">cURL</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">TypeScript</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">Python</button>
+          </div>
+        </div>
+        <pre role="tabpanel"><code>curl -X POST https://api.oorr.ai/api/tutor \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "student_4821",
+    "message": "اشرح قانون أوم بإيجاز",
+    "plan": "normal",
+    "modelTier": "basic",
+    "grade": "السادس العلمي",
+    "subject": "physics"
+  }'</code></pre>
+        <pre role="tabpanel" hidden><code>const res = await fetch("https://api.oorr.ai/api/tutor", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    userId: "student_4821",
+    message: "اشرح قانون أوم بإيجاز",
+    plan: "normal",
+    modelTier: "basic",
+    grade: "السادس العلمي",
+    subject: "physics",
+  }),
+});
+
+if (!res.ok) {
+  const err = await res.json();
+  throw new Error(`${err.code}: ${err.error}`);
+}
+
+const data = await res.json();
+console.log(data.answer);
+console.log(data.inputTokens, data.outputTokens, data.totalTokens);</code></pre>
+        <pre role="tabpanel" hidden><code>import requests
+
+res = requests.post(
+    "https://api.oorr.ai/api/tutor",
+    json={
+        "userId": "student_4821",
+        "message": "اشرح قانون أوم بإيجاز",
+        "plan": "normal",
+        "modelTier": "basic",
+        "grade": "السادس العلمي",
+        "subject": "physics",
+    },
+    timeout=90,
+)
+
+if not res.ok:
+    err = res.json()
+    raise RuntimeError(f"{err['code']}: {err['error']}")
+
+data = res.json()
+print(data["answer"])
+print(data["inputTokens"], data["outputTokens"], data["totalTokens"])</code></pre>
+      </div>
+
+      <div class="note">
+        <p class="note-title">Set a generous timeout</p>
+        <p>
+          Tutoring answers routinely take longer than a typical default. OORR's own
+          clients use a <strong>90&nbsp;second</strong> request timeout. Use
+          <code>/api/tutor/stream</code> if you want tokens as they are produced.
+        </p>
+      </div>
+
+      <nav class="pager" aria-label="Documentation pages">
+        <a class="pager-link pager-prev" href="../"><span>Previous</span><b>Introduction</b></a>
+        <a class="pager-link pager-next" href="../authentication/"><span>Next</span><b>Authentication</b></a>
+      </nav>
+    </article>
+
+    <aside class="toc" id="toc" aria-label="On this page"></aside>
+  </main>
+</div>
+
+<footer class="docfoot">
+  <span>OORR AI API</span>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="../../../">Radiant</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://radiant-iraq.com" target="_blank" rel="noopener">radiant-iraq.com</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+</footer>
+
+<script src="../docs.js"></script>
+</body>
+</html>

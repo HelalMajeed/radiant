@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Usage — OORR AI · Radiant</title>
+<meta name="description" content="Request, token and cost reporting for the OORR AI API.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="../../../assets/favicon.png">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wash" aria-hidden="true"></div>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <a class="brand" href="../../../">
+    <img src="../../../assets/radiant-mark.png" alt="" draggable="false">
+    <b>Radiant</b>
+  </a>
+  <span class="crumb">Docs&nbsp; / &nbsp;<em>OORR AI</em></span>
+  <div class="topbar-end">
+    <a class="ghost-link" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      Menu
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar" id="sidebar" aria-label="Documentation">
+    <p class="sb-title">OORR AI</p>
+    <ul class="sb-list">
+      <li><a href="../">Introduction</a></li>
+      <li><a href="../quickstart/">Quickstart</a></li>
+      <li><a href="../authentication/">Authentication</a></li>
+      <li><a href="../models/">Models</a></li>
+      <li><a href="../chat/">Chat</a></li>
+      <li><a href="../vision/">Vision</a></li>
+      <li><a href="../api-reference/">API Reference</a></li>
+      <li><a href="../pricing/">Pricing</a></li>
+      <li><a href="../usage/" class="is-current" aria-current="page">Usage</a></li>
+      <li><a href="../api-keys/">API Keys</a></li>
+    </ul>
+    <p class="sb-title">Status legend</p>
+    <ul class="sb-legend">
+      <li><span class="pill pill--live">Live</span></li>
+      <li><span class="pill pill--pending">Pending</span></li>
+      <li><span class="pill pill--ui">UI only</span></li>
+    </ul>
+  </nav>
+
+  <main class="content" id="main">
+    <article class="prose">
+      <div class="page-head">
+        <p class="eyebrow">OORR AI</p>
+        <h1>Usage <span class="pill pill--ui">UI only</span></h1>
+      </div>
+
+<div class="note note--warn">
+        <p class="note-title">No usage API exists — these tiles cannot be populated</p>
+        <p>
+          Usage is recorded server-side, but the deployed API exposes
+          <strong>no endpoint</strong> that reads it back: there is no per-caller
+          totals endpoint, no usage-history endpoint and no cost aggregation. The panel
+          below is the interface shell only. It shows no numbers because there are no
+          real numbers to show, and it will not invent any.
+        </p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Usage summary</h3>
+          <span class="pill pill--pending">Awaiting backend</span>
+        </div>
+        <p style="color:var(--mute-2);font-size:13px;margin:0">
+          Current Asia/Baghdad day. Requires <code>GET /api/usage/summary</code>.
+        </p>
+
+        <dl class="grid">
+          <div class="stat"><dt>API requests</dt><dd>—<small>Count of API requests.</small></dd></div>
+          <div class="stat"><dt>Input tokens</dt><dd>—<small>Sum of <code>inputTokens</code>.</small></dd></div>
+          <div class="stat"><dt>Output tokens</dt><dd>—<small>Sum of <code>outputTokens</code>.</small></dd></div>
+          <div class="stat"><dt>Total tokens</dt><dd>—<small>The allowance-accounted figure.</small></dd></div>
+          <div class="stat"><dt>Current cost</dt><dd>—<small>Not computed anywhere in the service.</small></dd></div>
+        </dl>
+
+        <h4>Usage history</h4>
+        <div class="tablewrap">
+          <table class="usage-history">
+            <thead>
+              <tr><th>Date</th><th>Requests</th><th>Input</th><th>Output</th><th>Total</th><th>Cost</th></tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="6" style="text-align:center;color:var(--mute-2);padding:22px 15px">
+                No data source. A history endpoint is not implemented.
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3>What already exists server-side</h3>
+      <p>
+        Every request is metered with the fields below. Building the panel above
+        is a matter of exposing a read endpoint over this table — the measurement layer
+        is already in place and is billing-ready in the sense that input and output
+        tokens are stored separately per call.
+      </p>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">Metered per request</span></div>
+        <pre><code>{
+  "id":           "uuid",
+  "userId":       "student_4821",
+  "model":        "sargon-1.5",
+  "inputTokens":  412,
+  "outputTokens": 735,
+  "totalTokens":  1147,
+  "latencyMs":    4210,
+  "success":      true,
+  "createdAt":    "2026-09-23T09:14:02.441Z",
+  "requestType":  "text"
+}</code></pre>
+      </div>
+      <p>
+        Only same-day totals per caller are aggregated today, and only for the allowance
+        check. Per-key attribution, multi-day history and cost rollups all require the
+        API-key work described next.
+      </p>
+
+      <nav class="pager" aria-label="Documentation pages">
+        <a class="pager-link pager-prev" href="../pricing/"><span>Previous</span><b>Pricing</b></a>
+        <a class="pager-link pager-next" href="../api-keys/"><span>Next</span><b>API Keys</b></a>
+      </nav>
+    </article>
+
+    <aside class="toc" id="toc" aria-label="On this page"></aside>
+  </main>
+</div>
+
+<footer class="docfoot">
+  <span>OORR AI API</span>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="../../../">Radiant</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://radiant-iraq.com" target="_blank" rel="noopener">radiant-iraq.com</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+</footer>
+
+<script src="../docs.js"></script>
+</body>
+</html>

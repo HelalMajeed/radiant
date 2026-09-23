@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vision — OORR AI · Radiant</title>
+<meta name="description" content="Send an image with your request for educational image understanding.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="../../../assets/favicon.png">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wash" aria-hidden="true"></div>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <a class="brand" href="../../../">
+    <img src="../../../assets/radiant-mark.png" alt="" draggable="false">
+    <b>Radiant</b>
+  </a>
+  <span class="crumb">Docs&nbsp; / &nbsp;<em>OORR AI</em></span>
+  <div class="topbar-end">
+    <a class="ghost-link" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      Menu
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar" id="sidebar" aria-label="Documentation">
+    <p class="sb-title">OORR AI</p>
+    <ul class="sb-list">
+      <li><a href="../">Introduction</a></li>
+      <li><a href="../quickstart/">Quickstart</a></li>
+      <li><a href="../authentication/">Authentication</a></li>
+      <li><a href="../models/">Models</a></li>
+      <li><a href="../chat/">Chat</a></li>
+      <li><a href="../vision/" class="is-current" aria-current="page">Vision</a></li>
+      <li><a href="../api-reference/">API Reference</a></li>
+      <li><a href="../pricing/">Pricing</a></li>
+      <li><a href="../usage/">Usage</a></li>
+      <li><a href="../api-keys/">API Keys</a></li>
+    </ul>
+    <p class="sb-title">Status legend</p>
+    <ul class="sb-legend">
+      <li><span class="pill pill--live">Live</span></li>
+      <li><span class="pill pill--pending">Pending</span></li>
+      <li><span class="pill pill--ui">UI only</span></li>
+    </ul>
+  </nav>
+
+  <main class="content" id="main">
+    <article class="prose">
+      <div class="page-head">
+        <p class="eyebrow">OORR AI</p>
+        <h1>Vision <span class="pill pill--live">Live</span></h1>
+      </div>
+
+<p>
+        There is no separate vision endpoint. Attach an <code>image</code> object to a
+        normal <code>/api/tutor</code> or <code>/api/tutor/stream</code> request and it
+        routes to the vision path. The image travels base64-encoded inside the JSON
+        body — there is no multipart upload and no file-id indirection.
+      </p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>image.mimeType</code></td><td>string</td><td>Required. One of <code>image/png</code>, <code>image/jpeg</code>, <code>image/webp</code>.</td></tr>
+            <tr><td><code>image.data</code></td><td>string</td><td>Required. Base64, no data-URI prefix. Decoded size must be 1 byte – 10&nbsp;MiB.</td></tr>
+            <tr><td><code>image.kind</code></td><td>string</td><td>Optional. <code>general</code> (default) or <code>handwritten_math</code>, which runs OCR before the tutor answers.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="codewrap" data-tabs>
+        <div class="codehead">
+          <div class="tabs" role="tablist" aria-label="Vision language">
+            <button class="tab" type="button" role="tab" aria-selected="true">cURL</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">TypeScript</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">Python</button>
+          </div>
+        </div>
+        <pre role="tabpanel"><code># Build the JSON with the base64 image inline, then POST it.
+jq -n \
+  --arg data "$(base64 -w0 question.png)" \
+  '{
+    userId: "student_4821",
+    message: "حل هذا السؤال خطوة بخطوة",
+    plan: "normal",
+    modelTier: "basic",
+    image: { mimeType: "image/png", data: $data, kind: "handwritten_math" }
+  }' \
+| curl -X POST https://api.oorr.ai/api/tutor \
+    -H "Content-Type: application/json" \
+    --data-binary @-</code></pre>
+        <pre role="tabpanel" hidden><code>import { readFile } from "node:fs/promises";
+
+const image = await readFile("question.png");
+
+const res = await fetch("https://api.oorr.ai/api/tutor", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    userId: "student_4821",
+    message: "حل هذا السؤال خطوة بخطوة",
+    plan: "normal",
+    modelTier: "basic",
+    image: {
+      mimeType: "image/png",
+      data: image.toString("base64"),
+      kind: "handwritten_math",
+    },
+  }),
+});
+
+const data = await res.json();
+console.log(data.answer, data.model);</code></pre>
+        <pre role="tabpanel" hidden><code>import base64
+import requests
+
+with open("question.png", "rb") as f:
+    encoded = base64.b64encode(f.read()).decode("ascii")
+
+res = requests.post(
+    "https://api.oorr.ai/api/tutor",
+    json={
+        "userId": "student_4821",
+        "message": "حل هذا السؤال خطوة بخطوة",
+        "plan": "normal",
+        "modelTier": "basic",
+        "image": {
+            "mimeType": "image/png",
+            "data": encoded,
+            "kind": "handwritten_math",
+        },
+    },
+    timeout=90,
+)
+
+data = res.json()
+print(data["answer"], data["model"])</code></pre>
+      </div>
+
+      <div class="note">
+        <p class="note-title">Size the payload, not just the file</p>
+        <p>
+          The 10&nbsp;MiB cap is on the <em>decoded</em> image. Base64 adds roughly
+          one third, and the server rejects an oversized request on the encoded length
+          before it allocates memory to decode — so an over-cap image fails fast with
+          <code>400 INVALID_REQUEST</code>.
+        </p>
+      </div>
+
+      <nav class="pager" aria-label="Documentation pages">
+        <a class="pager-link pager-prev" href="../chat/"><span>Previous</span><b>Chat</b></a>
+        <a class="pager-link pager-next" href="../api-reference/"><span>Next</span><b>API Reference</b></a>
+      </nav>
+    </article>
+
+    <aside class="toc" id="toc" aria-label="On this page"></aside>
+  </main>
+</div>
+
+<footer class="docfoot">
+  <span>OORR AI API</span>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="../../../">Radiant</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://radiant-iraq.com" target="_blank" rel="noopener">radiant-iraq.com</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+</footer>
+
+<script src="../docs.js"></script>
+</body>
+</html>

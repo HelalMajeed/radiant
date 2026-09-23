@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Models — OORR AI · Radiant</title>
+<meta name="description" content="Sargon 1.5 — OORR AI's production model — and its capability tiers.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="../../../assets/favicon.png">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wash" aria-hidden="true"></div>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <a class="brand" href="../../../">
+    <img src="../../../assets/radiant-mark.png" alt="" draggable="false">
+    <b>Radiant</b>
+  </a>
+  <span class="crumb">Docs&nbsp; / &nbsp;<em>OORR AI</em></span>
+  <div class="topbar-end">
+    <a class="ghost-link" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      Menu
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar" id="sidebar" aria-label="Documentation">
+    <p class="sb-title">OORR AI</p>
+    <ul class="sb-list">
+      <li><a href="../">Introduction</a></li>
+      <li><a href="../quickstart/">Quickstart</a></li>
+      <li><a href="../authentication/">Authentication</a></li>
+      <li><a href="../models/" class="is-current" aria-current="page">Models</a></li>
+      <li><a href="../chat/">Chat</a></li>
+      <li><a href="../vision/">Vision</a></li>
+      <li><a href="../api-reference/">API Reference</a></li>
+      <li><a href="../pricing/">Pricing</a></li>
+      <li><a href="../usage/">Usage</a></li>
+      <li><a href="../api-keys/">API Keys</a></li>
+    </ul>
+    <p class="sb-title">Status legend</p>
+    <ul class="sb-legend">
+      <li><span class="pill pill--live">Live</span></li>
+      <li><span class="pill pill--pending">Pending</span></li>
+      <li><span class="pill pill--ui">UI only</span></li>
+    </ul>
+  </nav>
+
+  <main class="content" id="main">
+    <article class="prose">
+      <div class="page-head">
+        <p class="eyebrow">OORR AI</p>
+        <h1>Models <span class="pill pill--live">Live</span></h1>
+      </div>
+
+<h3>Sargon 1.5</h3>
+      <p>
+        OORR AI's current production model for chat, Iraqi curriculum assistance and
+        supported educational image understanding.
+      </p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Field</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Model</td><td>Sargon 1.5</td></tr>
+            <tr><td>Model ID</td><td><code>sargon-1.5</code></td></tr>
+            <tr><td>Capabilities</td><td>Chat · Iraqi curriculum assistance · educational image understanding</td></tr>
+            <tr><td>Status</td><td><span class="pill pill--live">Live</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Every successful response reports <code>"model": "sargon-1.5"</code>. This is a
+        stable public identifier: you integrate against Sargon 1.5, and the
+        infrastructure that executes a request is managed by Radiant and may change
+        without notice or API impact.
+      </p>
+
+      <h3>Capability tiers</h3>
+      <p>
+        <code>modelTier</code> selects how much capability a request is served with.
+        It is a service-level setting on Sargon 1.5, not a different model — the
+        reported <code>model</code> is <code>sargon-1.5</code> in every case.
+      </p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Tier</th><th>Behaviour</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>basic</code></td>
+              <td>Default. Standard chat and image understanding.</td>
+              <td><span class="pill pill--live">Live</span></td>
+            </tr>
+            <tr>
+              <td><code>pro</code></td>
+              <td>Higher-capability reasoning, gated by a per-caller trial quota. Returns a <code>proTrial</code> object describing remaining quota.</td>
+              <td><span class="pill pill--live">Live</span></td>
+            </tr>
+            <tr>
+              <td><code>ultra</code></td>
+              <td>Accepted by the validator only so it can be refused explicitly. Always rejected with <code>503 ULTRA_UNAVAILABLE</code> — never served and never silently downgraded.</td>
+              <td><span class="pill pill--pending">Pending</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        If <code>modelTier</code> is omitted the server derives it: <code>basic</code>,
+        unless the legacy combination <code>plan: "premium"</code> with
+        <code>complexity: "complex"</code> is sent, which resolves to <code>pro</code>.
+        Sending an unrecognised tier is a <code>400 INVALID_REQUEST</code>.
+      </p>
+
+      <div class="note">
+        <p class="note-title">Capabilities by request shape</p>
+        <p>
+          A text-only request is answered as chat. A request carrying
+          <code>image</code> is answered with image understanding.
+          <code>image.kind: "handwritten_math"</code> tells Sargon the image is
+          handwritten mathematics so it is transcribed before being answered.
+        </p>
+      </div>
+
+      <div class="note">
+        <p class="note-title">Execution is managed by Radiant</p>
+        <p>
+          How a request is executed — and on what infrastructure — is not exposed and
+          is not selectable. You send a request to Sargon 1.5 and receive an answer
+          with its token counts; there is no field to read or set that changes this.
+        </p>
+      </div>
+
+      <nav class="pager" aria-label="Documentation pages">
+        <a class="pager-link pager-prev" href="../authentication/"><span>Previous</span><b>Authentication</b></a>
+        <a class="pager-link pager-next" href="../chat/"><span>Next</span><b>Chat</b></a>
+      </nav>
+    </article>
+
+    <aside class="toc" id="toc" aria-label="On this page"></aside>
+  </main>
+</div>
+
+<footer class="docfoot">
+  <span>OORR AI API</span>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="../../../">Radiant</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://radiant-iraq.com" target="_blank" rel="noopener">radiant-iraq.com</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+</footer>
+
+<script src="../docs.js"></script>
+</body>
+</html>

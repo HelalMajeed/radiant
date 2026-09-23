@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Authentication — OORR AI · Radiant</title>
+<meta name="description" content="How OORR AI requests are identified today, and the planned API-key contract.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="../../../assets/favicon.png">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wash" aria-hidden="true"></div>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <a class="brand" href="../../../">
+    <img src="../../../assets/radiant-mark.png" alt="" draggable="false">
+    <b>Radiant</b>
+  </a>
+  <span class="crumb">Docs&nbsp; / &nbsp;<em>OORR AI</em></span>
+  <div class="topbar-end">
+    <a class="ghost-link" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      Menu
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar" id="sidebar" aria-label="Documentation">
+    <p class="sb-title">OORR AI</p>
+    <ul class="sb-list">
+      <li><a href="../">Introduction</a></li>
+      <li><a href="../quickstart/">Quickstart</a></li>
+      <li><a href="../authentication/" class="is-current" aria-current="page">Authentication</a></li>
+      <li><a href="../models/">Models</a></li>
+      <li><a href="../chat/">Chat</a></li>
+      <li><a href="../vision/">Vision</a></li>
+      <li><a href="../api-reference/">API Reference</a></li>
+      <li><a href="../pricing/">Pricing</a></li>
+      <li><a href="../usage/">Usage</a></li>
+      <li><a href="../api-keys/">API Keys</a></li>
+    </ul>
+    <p class="sb-title">Status legend</p>
+    <ul class="sb-legend">
+      <li><span class="pill pill--live">Live</span></li>
+      <li><span class="pill pill--pending">Pending</span></li>
+      <li><span class="pill pill--ui">UI only</span></li>
+    </ul>
+  </nav>
+
+  <main class="content" id="main">
+    <article class="prose">
+      <div class="page-head">
+        <p class="eyebrow">OORR AI</p>
+        <h1>Authentication <span class="pill pill--pending">Pending</span></h1>
+      </div>
+
+<div class="note note--warn">
+        <p class="note-title">API-key authentication is not deployed yet</p>
+        <p>
+          There is currently <strong>no API-key system</strong> on the OORR API. The
+          tutor endpoints accept no <code>Authorization</code> header, and no key is
+          issued, validated or revoked anywhere in the deployed service. Anything on
+          this page describing bearer keys is a <strong>planned contract</strong>, not
+          a live one.
+        </p>
+      </div>
+
+      <h3>How requests are identified today</h3>
+      <p>
+        The caller supplies its own <code>userId</code> in the request body. That value
+        is what the server uses for rate limiting, daily token allowances and usage
+        accounting — it is <strong>not</strong> authenticated, and it is not proof of
+        identity.
+      </p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Mechanism</th><th>Where</th><th>Protects</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td><code>userId</code> in body</td><td><code>/api/tutor*</code></td><td>Rate limit, daily allowance, usage rows</td><td><span class="pill pill--live">Live</span></td></tr>
+            <tr><td>Session cookie</td><td><code>/api/auth/*</code></td><td>Signed-in student accounts (WhatsApp OTP)</td><td><span class="pill pill--live">Live</span></td></tr>
+            <tr><td><code>Authorization: Bearer</code></td><td><code>/api/tutor*</code></td><td>Developer API keys</td><td><span class="pill pill--pending">Pending</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        The existing account auth is a passwordless WhatsApp one-time-code flow that
+        issues an <code>HttpOnly</code> session cookie. It authenticates <em>students</em>
+        in the OORR app; it is not a developer credential and does not grant API access.
+      </p>
+
+      <h3>Planned bearer-key contract <span class="pill pill--pending">Pending</span></h3>
+      <p>
+        When key auth ships, it is intended to look like the following. Do not build
+        against this yet — the header is currently ignored.
+      </p>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">Planned — not yet accepted</span></div>
+        <pre><code>curl -X POST https://api.oorr.ai/api/tutor \
+  -H "Authorization: Bearer $OORR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "message": "اشرح قانون أوم بإيجاز", "modelTier": "basic" }'</code></pre>
+      </div>
+      <p>
+        Under that design the key identifies the caller, so <code>userId</code> becomes
+        optional and rate limits, allowances and usage attach to the key rather than to
+        a self-declared id.
+      </p>
+
+      <nav class="pager" aria-label="Documentation pages">
+        <a class="pager-link pager-prev" href="../quickstart/"><span>Previous</span><b>Quickstart</b></a>
+        <a class="pager-link pager-next" href="../models/"><span>Next</span><b>Models</b></a>
+      </nav>
+    </article>
+
+    <aside class="toc" id="toc" aria-label="On this page"></aside>
+  </main>
+</div>
+
+<footer class="docfoot">
+  <span>OORR AI API</span>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="../../../">Radiant</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://radiant-iraq.com" target="_blank" rel="noopener">radiant-iraq.com</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+</footer>
+
+<script src="../docs.js"></script>
+</body>
+</html>

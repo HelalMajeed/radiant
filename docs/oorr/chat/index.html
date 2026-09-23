@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chat — OORR AI · Radiant</title>
+<meta name="description" content="The OORR AI chat endpoint, its response shape, and Server-Sent Event streaming.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="../../../assets/favicon.png">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wash" aria-hidden="true"></div>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <a class="brand" href="../../../">
+    <img src="../../../assets/radiant-mark.png" alt="" draggable="false">
+    <b>Radiant</b>
+  </a>
+  <span class="crumb">Docs&nbsp; / &nbsp;<em>OORR AI</em></span>
+  <div class="topbar-end">
+    <a class="ghost-link" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      Menu
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar" id="sidebar" aria-label="Documentation">
+    <p class="sb-title">OORR AI</p>
+    <ul class="sb-list">
+      <li><a href="../">Introduction</a></li>
+      <li><a href="../quickstart/">Quickstart</a></li>
+      <li><a href="../authentication/">Authentication</a></li>
+      <li><a href="../models/">Models</a></li>
+      <li><a href="../chat/" class="is-current" aria-current="page">Chat</a></li>
+      <li><a href="../vision/">Vision</a></li>
+      <li><a href="../api-reference/">API Reference</a></li>
+      <li><a href="../pricing/">Pricing</a></li>
+      <li><a href="../usage/">Usage</a></li>
+      <li><a href="../api-keys/">API Keys</a></li>
+    </ul>
+    <p class="sb-title">Status legend</p>
+    <ul class="sb-legend">
+      <li><span class="pill pill--live">Live</span></li>
+      <li><span class="pill pill--pending">Pending</span></li>
+      <li><span class="pill pill--ui">UI only</span></li>
+    </ul>
+  </nav>
+
+  <main class="content" id="main">
+    <article class="prose">
+      <div class="page-head">
+        <p class="eyebrow">OORR AI</p>
+        <h1>Chat <span class="pill pill--live">Live</span></h1>
+      </div>
+
+<h4>POST /api/tutor</h4>
+      <p>
+        Returns one complete answer as JSON. This is the simplest way to call OORR and
+        the right default for server-to-server use.
+      </p>
+
+      <div class="codewrap" data-tabs>
+        <div class="codehead">
+          <div class="tabs" role="tablist" aria-label="Chat language">
+            <button class="tab" type="button" role="tab" aria-selected="true">cURL</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">TypeScript</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">Python</button>
+          </div>
+        </div>
+        <pre role="tabpanel"><code>curl -X POST https://api.oorr.ai/api/tutor \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "student_4821",
+    "message": "وما وحدة قياسها؟",
+    "plan": "normal",
+    "modelTier": "basic",
+    "conversationId": "conv_7f3a",
+    "history": [
+      { "role": "user", "content": "اشرح قانون أوم بإيجاز" },
+      { "role": "assistant", "content": "قانون أوم ينص على أن..." }
+    ]
+  }'</code></pre>
+        <pre role="tabpanel" hidden><code>type TutorResponse = {
+  answer: string;
+  /** Always "sargon-1.5". */
+  model: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  latencyMs: number;
+  requestId: string;
+  modelTier?: "basic" | "pro" | "ultra";
+};
+
+async function ask(message: string, history: { role: "user" | "assistant"; content: string }[]) {
+  const res = await fetch("https://api.oorr.ai/api/tutor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userId: "student_4821",
+      message,
+      plan: "normal",
+      modelTier: "basic",
+      conversationId: "conv_7f3a",
+      history,
+    }),
+  });
+
+  if (res.status === 429) {
+    const retry = Number(res.headers.get("Retry-After") ?? 30);
+    throw new Error(`rate limited, retry in ${retry}s`);
+  }
+
+  return (await res.json()) as TutorResponse;
+}</code></pre>
+        <pre role="tabpanel" hidden><code>import requests
+
+def ask(message, history):
+    res = requests.post(
+        "https://api.oorr.ai/api/tutor",
+        json={
+            "userId": "student_4821",
+            "message": message,
+            "plan": "normal",
+            "modelTier": "basic",
+            "conversationId": "conv_7f3a",
+            "history": history,
+        },
+        timeout=90,
+    )
+
+    if res.status_code == 429:
+        retry = int(res.headers.get("Retry-After", 30))
+        raise RuntimeError(f"rate limited, retry in {retry}s")
+
+    res.raise_for_status()
+    return res.json()</code></pre>
+      </div>
+
+      <h4>Response</h4>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">200 OK</span></div>
+        <pre><code>{
+  "answer": "وحدة قياس المقاومة هي الأوم (Ω)، وتُعرَّف بأنها...",
+  "model": "sargon-1.5",
+  "inputTokens": 412,
+  "outputTokens": 735,
+  "totalTokens": 1147,
+  "latencyMs": 4210,
+  "requestId": "0f4c1b86-27a1-4f1e-9d0a-2b7c6e5a1d33",
+  "modelTier": "basic"
+}</code></pre>
+      </div>
+
+      <h3>Streaming</h3>
+      <h4>POST /api/tutor/stream</h4>
+      <p>
+        Identical request body. Validation and rate-limit failures are still ordinary
+        JSON HTTP errors; once the request is accepted the response becomes
+        <code>text/event-stream</code>.
+      </p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Event</th><th>Data</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>ready</code></td><td><code>{}</code></td><td>Stream opened.</td></tr>
+            <tr><td><code>status</code></td><td><code>{ stage, detail?, sequence }</code></td><td>Progress frame from a closed allowlist of stages. Carries no answer text.</td></tr>
+            <tr><td><code>delta</code></td><td><code>{ text }</code></td><td>An answer fragment. Concatenate in order.</td></tr>
+            <tr><td><code>trial</code></td><td>Pro-trial status</td><td>Emitted for <code>pro</code> requests.</td></tr>
+            <tr><td><code>done</code></td><td>Full response object</td><td>Terminal. Same shape as the JSON endpoint, including token counts.</td></tr>
+            <tr><td><code>error</code></td><td><code>{ error, code, requestId }</code></td><td>Terminal failure after the stream opened.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        <code>status.stage</code> is one of <code>accepted</code>,
+        <code>context</code>, <code>intent</code>, <code>preparing</code>,
+        <code>alternate_path</code>, <code>retrying</code>,
+        <code>quality_check</code>, <code>answer_ready</code>.
+        <code>detail</code> appears only for <code>context</code>
+        (<code>fresh</code>&nbsp;|&nbsp;<code>followup</code>) and <code>intent</code>
+        (<code>concise</code>, <code>explain_more</code>, <code>quiz</code>,
+        <code>image</code>, <code>general</code>).
+      </p>
+
+      <div class="codewrap" data-tabs>
+        <div class="codehead">
+          <div class="tabs" role="tablist" aria-label="Streaming language">
+            <button class="tab" type="button" role="tab" aria-selected="true">Wire</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">TypeScript</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">Python</button>
+          </div>
+        </div>
+        <pre role="tabpanel"><code>event: ready
+data: {}
+
+event: status
+data: {"stage":"accepted","sequence":1}
+
+event: status
+data: {"stage":"context","detail":"fresh","sequence":2}
+
+event: delta
+data: {"text":"قانون أوم "}
+
+event: delta
+data: {"text":"ينص على أن..."}
+
+event: done
+data: {"answer":"قانون أوم ينص على أن...","model":"sargon-1.5","inputTokens":318,"outputTokens":602,"totalTokens":920,"latencyMs":3870,"requestId":"9a2e...","modelTier":"basic"}</code></pre>
+        <pre role="tabpanel" hidden><code>const res = await fetch("https://api.oorr.ai/api/tutor/stream", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    userId: "student_4821",
+    message: "اشرح قانون أوم بإيجاز",
+    plan: "normal",
+    modelTier: "basic",
+  }),
+});
+
+if (!res.ok) throw new Error((await res.json()).code);
+
+const reader = res.body.getReader();
+const decoder = new TextDecoder();
+let buffer = "";
+let answer = "";
+
+while (true) {
+  const { value, done } = await reader.read();
+  if (done) break;
+  buffer += decoder.decode(value, { stream: true });
+
+  const frames = buffer.split("\n\n");
+  buffer = frames.pop() ?? "";
+
+  for (const frame of frames) {
+    const event = frame.match(/^event: (.+)$/m)?.[1];
+    const data = JSON.parse(frame.match(/^data: (.+)$/m)?.[1] ?? "{}");
+
+    if (event === "delta") answer += data.text;
+    if (event === "done") console.log(data.totalTokens, "tokens");
+    if (event === "error") throw new Error(data.code);
+  }
+}</code></pre>
+        <pre role="tabpanel" hidden><code>import json
+import requests
+
+with requests.post(
+    "https://api.oorr.ai/api/tutor/stream",
+    json={
+        "userId": "student_4821",
+        "message": "اشرح قانون أوم بإيجاز",
+        "plan": "normal",
+        "modelTier": "basic",
+    },
+    stream=True,
+    timeout=90,
+) as res:
+    res.raise_for_status()
+
+    event = None
+    answer = ""
+
+    for line in res.iter_lines(decode_unicode=True):
+        if line is None or line == "":
+            event = None
+            continue
+        if line.startswith("event: "):
+            event = line[7:]
+        elif line.startswith("data: "):
+            data = json.loads(line[6:])
+            if event == "delta":
+                answer += data["text"]
+            elif event == "done":
+                print(data["totalTokens"], "tokens")
+            elif event == "error":
+                raise RuntimeError(data["code"])</code></pre>
+      </div>
+
+      <nav class="pager" aria-label="Documentation pages">
+        <a class="pager-link pager-prev" href="../models/"><span>Previous</span><b>Models</b></a>
+        <a class="pager-link pager-next" href="../vision/"><span>Next</span><b>Vision</b></a>
+      </nav>
+    </article>
+
+    <aside class="toc" id="toc" aria-label="On this page"></aside>
+  </main>
+</div>
+
+<footer class="docfoot">
+  <span>OORR AI API</span>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="../../../">Radiant</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://radiant-iraq.com" target="_blank" rel="noopener">radiant-iraq.com</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+</footer>
+
+<script src="../docs.js"></script>
+</body>
+</html>

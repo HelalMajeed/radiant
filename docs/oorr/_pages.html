@@ -1,0 +1,1152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OORR AI — API Documentation · Radiant</title>
+<meta name="description" content="Developer documentation for the OORR AI API: authentication, chat, vision, request and response reference, error codes, rate limits, pricing and usage.">
+<meta name="theme-color" content="#000000">
+<!-- Build SOURCE for build.mjs, not a published page. The generated pages under
+     /docs/oorr/<slug>/ are what readers see; this must not be indexed as a
+     duplicate of all of them at once. -->
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="../../assets/favicon.png">
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+
+<div class="wash" aria-hidden="true"></div>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <a class="brand" href="../../">
+    <img src="../../assets/radiant-mark.png" alt="" draggable="false">
+    <b>Radiant</b>
+  </a>
+  <span class="crumb">Docs&nbsp; / &nbsp;<em>OORR AI</em></span>
+  <div class="topbar-end">
+    <a class="ghost-link" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      Contents
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar" id="sidebar" aria-label="Documentation">
+    <p class="sb-title">OORR AI</p>
+    <ul class="sb-list">
+      <li><a href="#introduction">Introduction</a></li>
+      <li><a href="#quickstart">Quickstart</a></li>
+      <li><a href="#authentication">Authentication</a></li>
+      <li><a href="#models">Models</a></li>
+      <li><a href="#chat">Chat</a></li>
+      <li><a href="#vision">Vision</a></li>
+      <li><a href="#reference">API Reference</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#usage">Usage</a></li>
+      <li><a href="#keys">API Keys</a></li>
+    </ul>
+    <p class="sb-title">Status legend</p>
+    <ul class="sb-list" style="font-size:12.5px">
+      <li style="padding:4px 0"><span class="pill pill--live">Live</span></li>
+      <li style="padding:4px 0"><span class="pill pill--pending">Pending</span></li>
+      <li style="padding:4px 0"><span class="pill pill--ui">UI only</span></li>
+    </ul>
+  </nav>
+
+  <main class="content" id="main">
+
+    <div class="doc-head">
+      <p class="eyebrow">Radiant · Developer Platform</p>
+      <h1>OORR AI API</h1>
+      <p class="lede">
+        OORR AI is an Arabic-first tutoring model served by Radiant. Its current
+        production model is <strong>Sargon&nbsp;1.5</strong>. This is the reference
+        for its HTTP API: how to call chat and image requests, what the responses
+        contain, how tokens are counted, and which limits apply.
+      </p>
+    </div>
+
+    <!-- ============================== INTRODUCTION ============================== -->
+    <section id="introduction">
+      <h2>Introduction <span class="pill pill--live">Live</span></h2>
+
+      <p>
+        OORR AI answers students' questions in Arabic in the voice of an Iraqi
+        teacher, working through problems step by step. Radiant is the platform that
+        exposes it; <strong>Sargon 1.5</strong> is the model that answers. The API
+        below is the deployed, production surface.
+      </p>
+
+      <h3>What Sargon 1.5 does today</h3>
+      <ul>
+        <li><strong>Arabic tutoring chat.</strong> Explanatory, step-by-step answers in Modern Standard Arabic, with familiar Iraqi phrasing where it helps.</li>
+        <li><strong>Subject and grade scoping.</strong> Optional <code>subject</code> and <code>grade</code> fields steer the answer toward a student's stage and course.</li>
+        <li><strong>Educational image understanding.</strong> Send a photo of a question, diagram or worked page and the model reads and explains its educational content.</li>
+        <li><strong>Handwritten maths.</strong> Images marked <code>kind: "handwritten_math"</code> are transcribed before the tutor answers.</li>
+        <li><strong>English curriculum books.</strong> A dedicated response policy applies to the two Grade&nbsp;6 scientific English books (student book and activity book).</li>
+        <li><strong>Short conversation memory.</strong> Prior turns of the same chat can be supplied with each request.</li>
+      </ul>
+
+      <div class="note note--warn">
+        <p class="note-title">Retrieval-backed curriculum grounding is not live</p>
+        <p>
+          OORR AI is trained and prompted as an Iraqi-curriculum tutor, but answers
+          are <strong>not</strong> currently retrieved from or cited against textbook
+          sources. The textbook retrieval subsystem exists behind the
+          <code>TEXTBOOK_RETRIEVAL_MODE</code> flag, is off by default, and in
+          <code>shadow</code> mode runs entirely off the response path for diagnostics —
+          it never influences an answer.
+        </p>
+        <p>
+          The production system prompt explicitly instructs the model not to claim it
+          has consulted the Iraqi curriculum or any specific study source. Treat
+          answers as tutoring, not as sourced curriculum citations.
+        </p>
+      </div>
+
+      <h3>Base URL</h3>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">Base URL</span></div>
+        <pre><code>https://api.oorr.ai</code></pre>
+      </div>
+      <p>All endpoints are rooted at <code>/api</code> and speak JSON over HTTPS.</p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Endpoint</th><th>Method</th><th>Purpose</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td><code>/api/tutor</code></td><td>POST</td><td>Chat completion — text, or text + image</td><td><span class="pill pill--live">Live</span></td></tr>
+            <tr><td><code>/api/tutor/stream</code></td><td>POST</td><td>Same request, streamed as Server-Sent Events</td><td><span class="pill pill--live">Live</span></td></tr>
+            <tr><td><code>/api/tutor/pro-trial</code></td><td>POST</td><td>Remaining Pro-tier trial quota for a caller</td><td><span class="pill pill--live">Live</span></td></tr>
+            <tr><td><code>/api/health</code></td><td>GET</td><td>Service liveness</td><td><span class="pill pill--live">Live</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================== QUICKSTART ============================== -->
+    <section id="quickstart">
+      <h2>Quickstart <span class="pill pill--live">Live</span></h2>
+
+      <p>
+        A minimal chat request. <code>userId</code>, <code>message</code> and
+        <code>plan</code> are required; everything else is optional.
+      </p>
+
+      <div class="codewrap" data-tabs>
+        <div class="codehead">
+          <div class="tabs" role="tablist" aria-label="Quickstart language">
+            <button class="tab" type="button" role="tab" aria-selected="true">cURL</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">TypeScript</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">Python</button>
+          </div>
+        </div>
+        <pre role="tabpanel"><code>curl -X POST https://api.oorr.ai/api/tutor \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "student_4821",
+    "message": "اشرح قانون أوم بإيجاز",
+    "plan": "normal",
+    "modelTier": "basic",
+    "grade": "السادس العلمي",
+    "subject": "physics"
+  }'</code></pre>
+        <pre role="tabpanel" hidden><code>const res = await fetch("https://api.oorr.ai/api/tutor", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    userId: "student_4821",
+    message: "اشرح قانون أوم بإيجاز",
+    plan: "normal",
+    modelTier: "basic",
+    grade: "السادس العلمي",
+    subject: "physics",
+  }),
+});
+
+if (!res.ok) {
+  const err = await res.json();
+  throw new Error(`${err.code}: ${err.error}`);
+}
+
+const data = await res.json();
+console.log(data.answer);
+console.log(data.inputTokens, data.outputTokens, data.totalTokens);</code></pre>
+        <pre role="tabpanel" hidden><code>import requests
+
+res = requests.post(
+    "https://api.oorr.ai/api/tutor",
+    json={
+        "userId": "student_4821",
+        "message": "اشرح قانون أوم بإيجاز",
+        "plan": "normal",
+        "modelTier": "basic",
+        "grade": "السادس العلمي",
+        "subject": "physics",
+    },
+    timeout=90,
+)
+
+if not res.ok:
+    err = res.json()
+    raise RuntimeError(f"{err['code']}: {err['error']}")
+
+data = res.json()
+print(data["answer"])
+print(data["inputTokens"], data["outputTokens"], data["totalTokens"])</code></pre>
+      </div>
+
+      <div class="note">
+        <p class="note-title">Set a generous timeout</p>
+        <p>
+          Tutoring answers routinely take longer than a typical default. OORR's own
+          clients use a <strong>90&nbsp;second</strong> request timeout. Use
+          <code>/api/tutor/stream</code> if you want tokens as they are produced.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================== AUTHENTICATION ============================== -->
+    <section id="authentication">
+      <h2>Authentication <span class="pill pill--pending">Pending</span></h2>
+
+      <div class="note note--warn">
+        <p class="note-title">API-key authentication is not deployed yet</p>
+        <p>
+          There is currently <strong>no API-key system</strong> on the OORR API. The
+          tutor endpoints accept no <code>Authorization</code> header, and no key is
+          issued, validated or revoked anywhere in the deployed service. Anything on
+          this page describing bearer keys is a <strong>planned contract</strong>, not
+          a live one.
+        </p>
+      </div>
+
+      <h3>How requests are identified today</h3>
+      <p>
+        The caller supplies its own <code>userId</code> in the request body. That value
+        is what the server uses for rate limiting, daily token allowances and usage
+        accounting — it is <strong>not</strong> authenticated, and it is not proof of
+        identity.
+      </p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Mechanism</th><th>Where</th><th>Protects</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td><code>userId</code> in body</td><td><code>/api/tutor*</code></td><td>Rate limit, daily allowance, usage rows</td><td><span class="pill pill--live">Live</span></td></tr>
+            <tr><td>Session cookie</td><td><code>/api/auth/*</code></td><td>Signed-in student accounts (WhatsApp OTP)</td><td><span class="pill pill--live">Live</span></td></tr>
+            <tr><td><code>Authorization: Bearer</code></td><td><code>/api/tutor*</code></td><td>Developer API keys</td><td><span class="pill pill--pending">Pending</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        The existing account auth is a passwordless WhatsApp one-time-code flow that
+        issues an <code>HttpOnly</code> session cookie. It authenticates <em>students</em>
+        in the OORR app; it is not a developer credential and does not grant API access.
+      </p>
+
+      <h3>Planned bearer-key contract <span class="pill pill--pending">Pending</span></h3>
+      <p>
+        When key auth ships, it is intended to look like the following. Do not build
+        against this yet — the header is currently ignored.
+      </p>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">Planned — not yet accepted</span></div>
+        <pre><code>curl -X POST https://api.oorr.ai/api/tutor \
+  -H "Authorization: Bearer $OORR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "message": "اشرح قانون أوم بإيجاز", "modelTier": "basic" }'</code></pre>
+      </div>
+      <p>
+        Under that design the key identifies the caller, so <code>userId</code> becomes
+        optional and rate limits, allowances and usage attach to the key rather than to
+        a self-declared id.
+      </p>
+    </section>
+
+    <!-- ============================== MODELS ============================== -->
+    <section id="models">
+      <h2>Models <span class="pill pill--live">Live</span></h2>
+
+      <h3>Sargon 1.5</h3>
+      <p>
+        OORR AI's current production model for chat, Iraqi curriculum assistance and
+        supported educational image understanding.
+      </p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Field</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Model</td><td>Sargon 1.5</td></tr>
+            <tr><td>Model ID</td><td><code>sargon-1.5</code></td></tr>
+            <tr><td>Capabilities</td><td>Chat · Iraqi curriculum assistance · educational image understanding</td></tr>
+            <tr><td>Status</td><td><span class="pill pill--live">Live</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Every successful response reports <code>"model": "sargon-1.5"</code>. This is a
+        stable public identifier: you integrate against Sargon 1.5, and the
+        infrastructure that executes a request is managed by Radiant and may change
+        without notice or API impact.
+      </p>
+
+      <h3>Capability tiers</h3>
+      <p>
+        <code>modelTier</code> selects how much capability a request is served with.
+        It is a service-level setting on Sargon 1.5, not a different model — the
+        reported <code>model</code> is <code>sargon-1.5</code> in every case.
+      </p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Tier</th><th>Behaviour</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>basic</code></td>
+              <td>Default. Standard chat and image understanding.</td>
+              <td><span class="pill pill--live">Live</span></td>
+            </tr>
+            <tr>
+              <td><code>pro</code></td>
+              <td>Higher-capability reasoning, gated by a per-caller trial quota. Returns a <code>proTrial</code> object describing remaining quota.</td>
+              <td><span class="pill pill--live">Live</span></td>
+            </tr>
+            <tr>
+              <td><code>ultra</code></td>
+              <td>Accepted by the validator only so it can be refused explicitly. Always rejected with <code>503 ULTRA_UNAVAILABLE</code> — never served and never silently downgraded.</td>
+              <td><span class="pill pill--pending">Pending</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        If <code>modelTier</code> is omitted the server derives it: <code>basic</code>,
+        unless the legacy combination <code>plan: "premium"</code> with
+        <code>complexity: "complex"</code> is sent, which resolves to <code>pro</code>.
+        Sending an unrecognised tier is a <code>400 INVALID_REQUEST</code>.
+      </p>
+
+      <div class="note">
+        <p class="note-title">Capabilities by request shape</p>
+        <p>
+          A text-only request is answered as chat. A request carrying
+          <code>image</code> is answered with image understanding.
+          <code>image.kind: "handwritten_math"</code> tells Sargon the image is
+          handwritten mathematics so it is transcribed before being answered.
+        </p>
+      </div>
+
+      <div class="note">
+        <p class="note-title">Execution is managed by Radiant</p>
+        <p>
+          How a request is executed — and on what infrastructure — is not exposed and
+          is not selectable. You send a request to Sargon 1.5 and receive an answer
+          with its token counts; there is no field to read or set that changes this.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================== CHAT ============================== -->
+    <section id="chat">
+      <h2>Chat <span class="pill pill--live">Live</span></h2>
+
+      <h4>POST /api/tutor</h4>
+      <p>
+        Returns one complete answer as JSON. This is the simplest way to call OORR and
+        the right default for server-to-server use.
+      </p>
+
+      <div class="codewrap" data-tabs>
+        <div class="codehead">
+          <div class="tabs" role="tablist" aria-label="Chat language">
+            <button class="tab" type="button" role="tab" aria-selected="true">cURL</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">TypeScript</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">Python</button>
+          </div>
+        </div>
+        <pre role="tabpanel"><code>curl -X POST https://api.oorr.ai/api/tutor \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "student_4821",
+    "message": "وما وحدة قياسها؟",
+    "plan": "normal",
+    "modelTier": "basic",
+    "conversationId": "conv_7f3a",
+    "history": [
+      { "role": "user", "content": "اشرح قانون أوم بإيجاز" },
+      { "role": "assistant", "content": "قانون أوم ينص على أن..." }
+    ]
+  }'</code></pre>
+        <pre role="tabpanel" hidden><code>type TutorResponse = {
+  answer: string;
+  /** Always "sargon-1.5". */
+  model: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  latencyMs: number;
+  requestId: string;
+  modelTier?: "basic" | "pro" | "ultra";
+};
+
+async function ask(message: string, history: { role: "user" | "assistant"; content: string }[]) {
+  const res = await fetch("https://api.oorr.ai/api/tutor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userId: "student_4821",
+      message,
+      plan: "normal",
+      modelTier: "basic",
+      conversationId: "conv_7f3a",
+      history,
+    }),
+  });
+
+  if (res.status === 429) {
+    const retry = Number(res.headers.get("Retry-After") ?? 30);
+    throw new Error(`rate limited, retry in ${retry}s`);
+  }
+
+  return (await res.json()) as TutorResponse;
+}</code></pre>
+        <pre role="tabpanel" hidden><code>import requests
+
+def ask(message, history):
+    res = requests.post(
+        "https://api.oorr.ai/api/tutor",
+        json={
+            "userId": "student_4821",
+            "message": message,
+            "plan": "normal",
+            "modelTier": "basic",
+            "conversationId": "conv_7f3a",
+            "history": history,
+        },
+        timeout=90,
+    )
+
+    if res.status_code == 429:
+        retry = int(res.headers.get("Retry-After", 30))
+        raise RuntimeError(f"rate limited, retry in {retry}s")
+
+    res.raise_for_status()
+    return res.json()</code></pre>
+      </div>
+
+      <h4>Response</h4>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">200 OK</span></div>
+        <pre><code>{
+  "answer": "وحدة قياس المقاومة هي الأوم (Ω)، وتُعرَّف بأنها...",
+  "model": "sargon-1.5",
+  "inputTokens": 412,
+  "outputTokens": 735,
+  "totalTokens": 1147,
+  "latencyMs": 4210,
+  "requestId": "0f4c1b86-27a1-4f1e-9d0a-2b7c6e5a1d33",
+  "modelTier": "basic"
+}</code></pre>
+      </div>
+
+      <h3>Streaming</h3>
+      <h4>POST /api/tutor/stream</h4>
+      <p>
+        Identical request body. Validation and rate-limit failures are still ordinary
+        JSON HTTP errors; once the request is accepted the response becomes
+        <code>text/event-stream</code>.
+      </p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Event</th><th>Data</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>ready</code></td><td><code>{}</code></td><td>Stream opened.</td></tr>
+            <tr><td><code>status</code></td><td><code>{ stage, detail?, sequence }</code></td><td>Progress frame from a closed allowlist of stages. Carries no answer text.</td></tr>
+            <tr><td><code>delta</code></td><td><code>{ text }</code></td><td>An answer fragment. Concatenate in order.</td></tr>
+            <tr><td><code>trial</code></td><td>Pro-trial status</td><td>Emitted for <code>pro</code> requests.</td></tr>
+            <tr><td><code>done</code></td><td>Full response object</td><td>Terminal. Same shape as the JSON endpoint, including token counts.</td></tr>
+            <tr><td><code>error</code></td><td><code>{ error, code, requestId }</code></td><td>Terminal failure after the stream opened.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        <code>status.stage</code> is one of <code>accepted</code>,
+        <code>context</code>, <code>intent</code>, <code>preparing</code>,
+        <code>alternate_path</code>, <code>retrying</code>,
+        <code>quality_check</code>, <code>answer_ready</code>.
+        <code>detail</code> appears only for <code>context</code>
+        (<code>fresh</code>&nbsp;|&nbsp;<code>followup</code>) and <code>intent</code>
+        (<code>concise</code>, <code>explain_more</code>, <code>quiz</code>,
+        <code>image</code>, <code>general</code>).
+      </p>
+
+      <div class="codewrap" data-tabs>
+        <div class="codehead">
+          <div class="tabs" role="tablist" aria-label="Streaming language">
+            <button class="tab" type="button" role="tab" aria-selected="true">Wire</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">TypeScript</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">Python</button>
+          </div>
+        </div>
+        <pre role="tabpanel"><code>event: ready
+data: {}
+
+event: status
+data: {"stage":"accepted","sequence":1}
+
+event: status
+data: {"stage":"context","detail":"fresh","sequence":2}
+
+event: delta
+data: {"text":"قانون أوم "}
+
+event: delta
+data: {"text":"ينص على أن..."}
+
+event: done
+data: {"answer":"قانون أوم ينص على أن...","model":"sargon-1.5","inputTokens":318,"outputTokens":602,"totalTokens":920,"latencyMs":3870,"requestId":"9a2e...","modelTier":"basic"}</code></pre>
+        <pre role="tabpanel" hidden><code>const res = await fetch("https://api.oorr.ai/api/tutor/stream", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    userId: "student_4821",
+    message: "اشرح قانون أوم بإيجاز",
+    plan: "normal",
+    modelTier: "basic",
+  }),
+});
+
+if (!res.ok) throw new Error((await res.json()).code);
+
+const reader = res.body.getReader();
+const decoder = new TextDecoder();
+let buffer = "";
+let answer = "";
+
+while (true) {
+  const { value, done } = await reader.read();
+  if (done) break;
+  buffer += decoder.decode(value, { stream: true });
+
+  const frames = buffer.split("\n\n");
+  buffer = frames.pop() ?? "";
+
+  for (const frame of frames) {
+    const event = frame.match(/^event: (.+)$/m)?.[1];
+    const data = JSON.parse(frame.match(/^data: (.+)$/m)?.[1] ?? "{}");
+
+    if (event === "delta") answer += data.text;
+    if (event === "done") console.log(data.totalTokens, "tokens");
+    if (event === "error") throw new Error(data.code);
+  }
+}</code></pre>
+        <pre role="tabpanel" hidden><code>import json
+import requests
+
+with requests.post(
+    "https://api.oorr.ai/api/tutor/stream",
+    json={
+        "userId": "student_4821",
+        "message": "اشرح قانون أوم بإيجاز",
+        "plan": "normal",
+        "modelTier": "basic",
+    },
+    stream=True,
+    timeout=90,
+) as res:
+    res.raise_for_status()
+
+    event = None
+    answer = ""
+
+    for line in res.iter_lines(decode_unicode=True):
+        if line is None or line == "":
+            event = None
+            continue
+        if line.startswith("event: "):
+            event = line[7:]
+        elif line.startswith("data: "):
+            data = json.loads(line[6:])
+            if event == "delta":
+                answer += data["text"]
+            elif event == "done":
+                print(data["totalTokens"], "tokens")
+            elif event == "error":
+                raise RuntimeError(data["code"])</code></pre>
+      </div>
+    </section>
+
+    <!-- ============================== VISION ============================== -->
+    <section id="vision">
+      <h2>Vision <span class="pill pill--live">Live</span></h2>
+
+      <p>
+        There is no separate vision endpoint. Attach an <code>image</code> object to a
+        normal <code>/api/tutor</code> or <code>/api/tutor/stream</code> request and it
+        routes to the vision path. The image travels base64-encoded inside the JSON
+        body — there is no multipart upload and no file-id indirection.
+      </p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>image.mimeType</code></td><td>string</td><td>Required. One of <code>image/png</code>, <code>image/jpeg</code>, <code>image/webp</code>.</td></tr>
+            <tr><td><code>image.data</code></td><td>string</td><td>Required. Base64, no data-URI prefix. Decoded size must be 1 byte – 10&nbsp;MiB.</td></tr>
+            <tr><td><code>image.kind</code></td><td>string</td><td>Optional. <code>general</code> (default) or <code>handwritten_math</code>, which runs OCR before the tutor answers.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="codewrap" data-tabs>
+        <div class="codehead">
+          <div class="tabs" role="tablist" aria-label="Vision language">
+            <button class="tab" type="button" role="tab" aria-selected="true">cURL</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">TypeScript</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">Python</button>
+          </div>
+        </div>
+        <pre role="tabpanel"><code># Build the JSON with the base64 image inline, then POST it.
+jq -n \
+  --arg data "$(base64 -w0 question.png)" \
+  '{
+    userId: "student_4821",
+    message: "حل هذا السؤال خطوة بخطوة",
+    plan: "normal",
+    modelTier: "basic",
+    image: { mimeType: "image/png", data: $data, kind: "handwritten_math" }
+  }' \
+| curl -X POST https://api.oorr.ai/api/tutor \
+    -H "Content-Type: application/json" \
+    --data-binary @-</code></pre>
+        <pre role="tabpanel" hidden><code>import { readFile } from "node:fs/promises";
+
+const image = await readFile("question.png");
+
+const res = await fetch("https://api.oorr.ai/api/tutor", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    userId: "student_4821",
+    message: "حل هذا السؤال خطوة بخطوة",
+    plan: "normal",
+    modelTier: "basic",
+    image: {
+      mimeType: "image/png",
+      data: image.toString("base64"),
+      kind: "handwritten_math",
+    },
+  }),
+});
+
+const data = await res.json();
+console.log(data.answer, data.model);</code></pre>
+        <pre role="tabpanel" hidden><code>import base64
+import requests
+
+with open("question.png", "rb") as f:
+    encoded = base64.b64encode(f.read()).decode("ascii")
+
+res = requests.post(
+    "https://api.oorr.ai/api/tutor",
+    json={
+        "userId": "student_4821",
+        "message": "حل هذا السؤال خطوة بخطوة",
+        "plan": "normal",
+        "modelTier": "basic",
+        "image": {
+            "mimeType": "image/png",
+            "data": encoded,
+            "kind": "handwritten_math",
+        },
+    },
+    timeout=90,
+)
+
+data = res.json()
+print(data["answer"], data["model"])</code></pre>
+      </div>
+
+      <div class="note">
+        <p class="note-title">Size the payload, not just the file</p>
+        <p>
+          The 10&nbsp;MiB cap is on the <em>decoded</em> image. Base64 adds roughly
+          one third, and the server rejects an oversized request on the encoded length
+          before it allocates memory to decode — so an over-cap image fails fast with
+          <code>400 INVALID_REQUEST</code>.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================== API REFERENCE ============================== -->
+    <section id="reference">
+      <h2>API Reference <span class="pill pill--live">Live</span></h2>
+
+      <h3>Request parameters</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>userId</code></td><td>string</td><td>Yes</td><td>Non-empty, ≤ 128 chars. Keys rate limit, daily allowance and usage rows. Not authenticated.</td></tr>
+            <tr><td><code>message</code></td><td>string</td><td>Yes</td><td>Non-empty, ≤ 12,000 characters.</td></tr>
+            <tr><td><code>plan</code></td><td>string</td><td>Yes</td><td><code>normal</code> or <code>premium</code>. Validated, then normalised to <code>normal</code> server-side — it cannot grant a paid tier.</td></tr>
+            <tr><td><code>modelTier</code></td><td>string</td><td>No</td><td><code>basic</code> | <code>pro</code> | <code>ultra</code>. Defaults to <code>basic</code>.</td></tr>
+            <tr><td><code>subject</code></td><td>string</td><td>No</td><td>≤ 100 chars. Scopes the tutor prompt.</td></tr>
+            <tr><td><code>grade</code></td><td>string</td><td>No</td><td>≤ 100 chars. The student's stage.</td></tr>
+            <tr><td><code>conversationId</code></td><td>string</td><td>No</td><td>≤ 128 chars. Groups turns of one chat.</td></tr>
+            <tr><td><code>complexity</code></td><td>string</td><td>No</td><td><code>normal</code> or <code>complex</code>. Legacy; prefer <code>modelTier</code>.</td></tr>
+            <tr><td><code>history</code></td><td>array</td><td>No</td><td>Prior turns of the same chat: <code>{ role: "user" | "assistant", content: string }</code>. Bounded and validated; never stored or logged. Excludes the current question.</td></tr>
+            <tr><td><code>image</code></td><td>object</td><td>No</td><td>See <a href="#vision">Vision</a>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note note--warn">
+        <p class="note-title">Two quirks worth knowing</p>
+        <p>
+          <code>plan</code> is <strong>required by the validator</strong> even though
+          the server immediately normalises it to <code>normal</code>. Omitting it is a
+          <code>400</code>, so send <code>"plan": "normal"</code> and select capability
+          with <code>modelTier</code>.
+        </p>
+        <p>
+          Unrecognised fields in the request body are ignored. There is no field that
+          selects or influences how Sargon 1.5 executes your request.
+        </p>
+      </div>
+
+      <h3>Response structure</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>answer</code></td><td>string</td><td>The tutor's answer, in Arabic unless an English-book policy applies.</td></tr>
+            <tr><td><code>model</code></td><td>string</td><td>The public model identifier. Always <code>sargon-1.5</code>.</td></tr>
+            <tr><td><code>inputTokens</code></td><td>number</td><td>Optional — present when a token count is reported for the request.</td></tr>
+            <tr><td><code>outputTokens</code></td><td>number</td><td>Optional — present when a token count is reported for the request.</td></tr>
+            <tr><td><code>totalTokens</code></td><td>number</td><td>Optional. The figure used for daily allowance accounting.</td></tr>
+            <tr><td><code>latencyMs</code></td><td>number</td><td>Server-side duration.</td></tr>
+            <tr><td><code>requestId</code></td><td>string</td><td>UUID. Quote it in support requests.</td></tr>
+            <tr><td><code>modelTier</code></td><td>string</td><td>Optional. The tier that served the request.</td></tr>
+            <tr><td><code>proTrial</code></td><td>object</td><td>Optional. Remaining Pro trial quota, for <code>pro</code> requests.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Token usage</h3>
+      <p>
+        Token counts come back on every successful response and, for streaming, on the
+        terminal <code>done</code> event. Each request is also metered server-side —
+        <code>inputTokens</code>, <code>outputTokens</code>, <code>totalTokens</code>,
+        <code>latencyMs</code>, success, and the request type
+        (<code>text</code>, <code>vision</code>, <code>math_ocr</code>,
+        <code>premium_reasoning</code>).
+      </p>
+      <p>
+        Usage rows never contain prompts, questions, answers, image data or credentials.
+        Aggregation resets daily on the <strong>Asia/Baghdad</strong> calendar day.
+      </p>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">Token fields on a response</span></div>
+        <pre><code>{
+  "inputTokens": 412,
+  "outputTokens": 735,
+  "totalTokens": 1147
+}</code></pre>
+      </div>
+      <div class="note note--warn">
+        <p class="note-title">These counts are recorded, not yet priced</p>
+        <p>
+          Token accounting is real and persisted. Converting it into a monetary amount
+          is <strong>not implemented</strong> in the service — no cost field is computed,
+          stored or returned. See <a href="#pricing">Pricing</a>.
+        </p>
+      </div>
+
+      <h3>Error responses</h3>
+      <p>Every failure returns a stable <code>code</code>, an Arabic <code>error</code> message safe to show a student, and a <code>requestId</code>.</p>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">429 Too Many Requests</span></div>
+        <pre><code>{
+  "error": "لقد أرسلت سؤالاً للتو. انتظر قليلاً قبل إرسال سؤال جديد.",
+  "code": "RATE_LIMITED",
+  "retryAfterSeconds": 27,
+  "requestId": "0f4c1b86-27a1-4f1e-9d0a-2b7c6e5a1d33"
+}</code></pre>
+      </div>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Code</th><th>HTTP</th><th>Cause</th></tr></thead>
+          <tbody>
+            <tr><td><code>INVALID_REQUEST</code></td><td>400</td><td>Validation failed: missing or malformed field, message too long, unsupported image type, image too large.</td></tr>
+            <tr><td><code>CONTENT_BLOCKED</code></td><td>422</td><td>The request was refused on safety grounds. Rephrase.</td></tr>
+            <tr><td><code>RATE_LIMITED</code></td><td>429</td><td>Per-caller cooldown not yet elapsed. Honour <code>Retry-After</code>.</td></tr>
+            <tr><td><code>DAILY_LIMIT_REACHED</code></td><td>429</td><td>Daily token allowance exhausted. Resets 00:00 Asia/Baghdad.</td></tr>
+            <tr><td><code>PRO_TRIAL_LIMIT_REACHED</code></td><td>429</td><td>Pro trial quota exhausted. Includes <code>proTrial</code> and <code>retryAfterSeconds</code>.</td></tr>
+            <tr><td><code>PRO_UNAVAILABLE</code></td><td>503</td><td>Pro tier cannot be served right now. Fall back to <code>basic</code>.</td></tr>
+            <tr><td><code>ULTRA_UNAVAILABLE</code></td><td>503</td><td><code>ultra</code> is not released. Never downgraded silently.</td></tr>
+            <tr><td><code>PROVIDER_UNAVAILABLE</code></td><td>503</td><td>The service could not produce an answer for this request. Retry with backoff.</td></tr>
+            <tr><td><code>INTERNAL_ERROR</code></td><td>500</td><td>Unexpected server fault. Retry with backoff; quote the <code>requestId</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Rate limits</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Limit</th><th>Value</th><th>Scope</th><th>On breach</th></tr></thead>
+          <tbody>
+            <tr><td>Request cooldown</td><td>1 request / 30 s</td><td>Per <code>userId</code></td><td><code>429 RATE_LIMITED</code> + <code>Retry-After</code></td></tr>
+            <tr><td>Daily tokens</td><td>100,000 (default)</td><td>Per <code>userId</code>, per Baghdad day</td><td><code>429 DAILY_LIMIT_REACHED</code></td></tr>
+            <tr><td>Message length</td><td>12,000 characters</td><td>Per request</td><td><code>400 INVALID_REQUEST</code></td></tr>
+            <tr><td>Image size</td><td>10 MiB decoded</td><td>Per request</td><td><code>400 INVALID_REQUEST</code></td></tr>
+            <tr><td>Pro tier</td><td>Trial quota</td><td>Per <code>userId</code></td><td><code>429 PRO_TRIAL_LIMIT_REACHED</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The cooldown is enforced atomically and persists across restarts. It is
+        reserved once per accepted request, so an internal retry still
+        counts as a single request. The server is the single source of truth for the
+        pace — mirror <code>Retry-After</code> rather than hard-coding an interval, and
+        note that a cooldown storage fault <strong>denies</strong> the request rather
+        than letting it through.
+      </p>
+
+      <h4>Handling 429 correctly</h4>
+      <div class="codewrap" data-tabs>
+        <div class="codehead">
+          <div class="tabs" role="tablist" aria-label="Retry language">
+            <button class="tab" type="button" role="tab" aria-selected="true">TypeScript</button>
+            <button class="tab" type="button" role="tab" aria-selected="false">Python</button>
+          </div>
+        </div>
+        <pre role="tabpanel"><code>async function askWithRetry(body: unknown, attempts = 3) {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const res = await fetch("https://api.oorr.ai/api/tutor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) return res.json();
+
+    const err = await res.json();
+
+    // Never retry a validation or safety failure — it will fail identically.
+    if (err.code === "INVALID_REQUEST" || err.code === "CONTENT_BLOCKED") {
+      throw new Error(`${err.code}: ${err.error}`);
+    }
+
+    // Obey the server's pace; fall back to the header, then a sane default.
+    const wait = err.retryAfterSeconds
+      ?? Number(res.headers.get("Retry-After"))
+      ?? 30;
+
+    if (attempt === attempts) throw new Error(`${err.code} after ${attempts} attempts`);
+    await new Promise((r) => setTimeout(r, wait * 1000));
+  }
+}</code></pre>
+        <pre role="tabpanel" hidden><code>import time
+import requests
+
+NO_RETRY = {"INVALID_REQUEST", "CONTENT_BLOCKED"}
+
+def ask_with_retry(body, attempts=3):
+    for attempt in range(1, attempts + 1):
+        res = requests.post(
+            "https://api.oorr.ai/api/tutor", json=body, timeout=90
+        )
+        if res.ok:
+            return res.json()
+
+        err = res.json()
+        if err.get("code") in NO_RETRY:
+            raise RuntimeError(f"{err['code']}: {err['error']}")
+
+        wait = err.get("retryAfterSeconds") or int(
+            res.headers.get("Retry-After", 30)
+        )
+        if attempt == attempts:
+            raise RuntimeError(f"{err.get('code')} after {attempts} attempts")
+        time.sleep(wait)</code></pre>
+      </div>
+    </section>
+
+    <!-- ============================== PRICING ============================== -->
+    <section id="pricing">
+      <h2>Pricing <span class="pill pill--pending">Billing pending</span></h2>
+
+      <p>Published rates for OORR AI, applying to chat and image requests alike.</p>
+
+      <dl class="grid">
+        <div class="price">
+          <dt>Input</dt>
+          <dd>
+            <span class="amount">$1.80</span>
+            <span class="per">per 1M tokens</span>
+          </dd>
+        </div>
+        <div class="price">
+          <dt>Output</dt>
+          <dd>
+            <span class="amount">$3.60</span>
+            <span class="per">per 1M tokens</span>
+          </dd>
+        </div>
+      </dl>
+
+      <div class="note note--warn">
+        <p class="note-title">Rates are published; metering-to-cost is not implemented</p>
+        <p>
+          The service records token counts, but it does <strong>not</strong> compute,
+          store or return a monetary amount, and there is no billing, invoicing or
+          payment path in the deployed API. These rates are the stated commercial
+          terms, not a value read back from the system.
+        </p>
+      </div>
+
+      <h3>Estimating a cost yourself</h3>
+      <p>
+        Because token counts are real, you can price a request client-side from the
+        response. Both figures are billed per million tokens.
+      </p>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">Client-side estimate</span></div>
+        <pre><code>const INPUT_PER_1M = 1.80;
+const OUTPUT_PER_1M = 3.60;
+
+function estimateUsd(res) {
+  const input = (res.inputTokens ?? 0) / 1e6 * INPUT_PER_1M;
+  const output = (res.outputTokens ?? 0) / 1e6 * OUTPUT_PER_1M;
+  return input + output;
+}
+
+// 412 input + 735 output tokens → about $0.00338
+</code></pre>
+      </div>
+      <p>
+        Token fields are optional: when a count is not reported for a request it is
+        absent, so treat a missing count as unknown rather than as zero.
+      </p>
+    </section>
+
+    <!-- ============================== USAGE ============================== -->
+    <section id="usage">
+      <h2>Usage <span class="pill pill--ui">UI only</span></h2>
+
+      <div class="note note--warn">
+        <p class="note-title">No usage API exists — these tiles cannot be populated</p>
+        <p>
+          Usage is recorded server-side, but the deployed API exposes
+          <strong>no endpoint</strong> that reads it back: there is no per-caller
+          totals endpoint, no usage-history endpoint and no cost aggregation. The panel
+          below is the interface shell only. It shows no numbers because there are no
+          real numbers to show, and it will not invent any.
+        </p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Usage summary</h3>
+          <span class="pill pill--pending">Awaiting backend</span>
+        </div>
+        <p style="color:var(--mute-2);font-size:13px;margin:0">
+          Current Asia/Baghdad day. Requires <code>GET /api/usage/summary</code>.
+        </p>
+
+        <dl class="grid">
+          <div class="stat"><dt>API requests</dt><dd>—<small>Count of API requests.</small></dd></div>
+          <div class="stat"><dt>Input tokens</dt><dd>—<small>Sum of <code>inputTokens</code>.</small></dd></div>
+          <div class="stat"><dt>Output tokens</dt><dd>—<small>Sum of <code>outputTokens</code>.</small></dd></div>
+          <div class="stat"><dt>Total tokens</dt><dd>—<small>The allowance-accounted figure.</small></dd></div>
+          <div class="stat"><dt>Current cost</dt><dd>—<small>Not computed anywhere in the service.</small></dd></div>
+        </dl>
+
+        <h4>Usage history</h4>
+        <div class="tablewrap">
+          <table class="usage-history">
+            <thead>
+              <tr><th>Date</th><th>Requests</th><th>Input</th><th>Output</th><th>Total</th><th>Cost</th></tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="6" style="text-align:center;color:var(--mute-2);padding:22px 15px">
+                No data source. A history endpoint is not implemented.
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3>What already exists server-side</h3>
+      <p>
+        Every request is metered with the fields below. Building the panel above
+        is a matter of exposing a read endpoint over this table — the measurement layer
+        is already in place and is billing-ready in the sense that input and output
+        tokens are stored separately per call.
+      </p>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">Metered per request</span></div>
+        <pre><code>{
+  "id":           "uuid",
+  "userId":       "student_4821",
+  "model":        "sargon-1.5",
+  "inputTokens":  412,
+  "outputTokens": 735,
+  "totalTokens":  1147,
+  "latencyMs":    4210,
+  "success":      true,
+  "createdAt":    "2026-09-23T09:14:02.441Z",
+  "requestType":  "text"
+}</code></pre>
+      </div>
+      <p>
+        Only same-day totals per caller are aggregated today, and only for the allowance
+        check. Per-key attribution, multi-day history and cost rollups all require the
+        API-key work described next.
+      </p>
+    </section>
+
+    <!-- ============================== API KEYS ============================== -->
+    <section id="keys">
+      <h2>API Keys <span class="pill pill--ui">UI only</span></h2>
+
+      <div class="note note--warn">
+        <p class="note-title">Key management is not implemented — nothing here issues a real key</p>
+        <p>
+          The deployed OORR backend has no key store, no key generation, no bearer
+          validation and no revocation. The dashboard below is a non-functional
+          interface shell: its <strong>Create API key</strong> button is disabled and it
+          lists no keys, because a working key cannot be produced from this page. A page
+          that appeared to mint a key would be issuing a credential that authenticates
+          nothing.
+        </p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Your API keys</h3>
+          <span class="pill pill--pending">Awaiting backend</span>
+        </div>
+        <p style="color:var(--mute-2);font-size:13px;margin:0 0 16px">
+          Requires <code>POST /api/keys</code> and <code>GET /api/keys</code>.
+        </p>
+
+        <button class="btn btn--primary" type="button" disabled
+                title="Disabled: no key-issuing endpoint exists">
+          Create API key
+        </button>
+
+        <div class="keys" aria-label="Existing keys (illustrative layout)">
+          <div class="keyrow" aria-hidden="true">
+            <div class="keyname">Key name</div>
+            <div class="keymask">oorr_sk_live_••••••••••••••••••••••••</div>
+            <div class="keymeta">Last used —</div>
+            <div class="keyacts">
+              <button class="btn" type="button" disabled>Copy</button>
+              <button class="btn" type="button" disabled>Rename</button>
+              <button class="btn btn--danger" type="button" disabled>Revoke</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty">
+          <p>
+            No keys — and none can be created until key management ships. The row above
+            shows the intended layout, not an existing key.
+          </p>
+        </div>
+      </div>
+
+      <h3>Intended key handling <span class="pill pill--pending">Pending</span></h3>
+      <p>These are the rules the implementation is specified to follow:</p>
+      <ul>
+        <li><strong>Shown once.</strong> The full secret is returned only in the response that creates it, and is never retrievable again.</li>
+        <li><strong>Stored hashed.</strong> Only a hash is persisted, matching how the existing service already stores session tokens and one-time codes.</li>
+        <li><strong>Masked thereafter.</strong> Listings return a prefix and last four characters only — enough to tell keys apart, never enough to use one.</li>
+        <li><strong>Renameable, revocable.</strong> A label can change freely; revocation is immediate and irreversible, and a revoked key is rejected before the request is served.</li>
+        <li><strong>Attributable.</strong> Rate limits, daily allowances and usage rows key off the API key instead of a self-declared <code>userId</code>.</li>
+      </ul>
+
+      <p>
+        The "Copy" action is only meaningful at creation time, when the plaintext secret
+        is briefly in hand. For an already-listed key there is nothing to copy but the
+        mask — which is why it is disabled here rather than silently copying a useless
+        string.
+      </p>
+
+      <h4>Planned create response</h4>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">Planned — endpoint does not exist</span></div>
+        <pre><code>POST /api/keys
+{ "name": "production-server" }
+
+201 Created
+{
+  "id":        "key_9f2c1a",
+  "name":      "production-server",
+  "key":       "oorr_sk_live_7Qd2...8xKf",   // shown exactly once
+  "prefix":    "oorr_sk_live",
+  "last4":     "8xKf",
+  "createdAt": "2026-09-23T09:14:02.441Z"
+}</code></pre>
+      </div>
+
+      <h4>Planned list response</h4>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">Planned — endpoint does not exist</span></div>
+        <pre><code>GET /api/keys
+
+200 OK
+{
+  "keys": [
+    {
+      "id":         "key_9f2c1a",
+      "name":       "production-server",
+      "masked":     "oorr_sk_live_••••8xKf",
+      "createdAt":  "2026-09-23T09:14:02.441Z",
+      "lastUsedAt": "2026-09-23T11:02:55.108Z",
+      "revokedAt":  null
+    }
+  ]
+}</code></pre>
+      </div>
+
+      <div class="note">
+        <p class="note-title">Until then</p>
+        <p>
+          Call the live endpoints documented above without an
+          <code>Authorization</code> header, supplying your own <code>userId</code>.
+          Contact Radiant if you need the key layer prioritised for an integration.
+        </p>
+      </div>
+    </section>
+
+    <footer class="docfoot">
+      <span>OORR AI API</span>
+      <span class="dot" aria-hidden="true"></span>
+      <a href="../../">Radiant</a>
+      <span class="dot" aria-hidden="true"></span>
+      <a href="https://radiant-iraq.com" target="_blank" rel="noopener">radiant-iraq.com</a>
+      <span class="dot" aria-hidden="true"></span>
+      <a href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    </footer>
+
+  </main>
+</div>
+
+<script src="docs.js"></script>
+</body>
+</html>

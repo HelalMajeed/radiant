@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pricing — OORR AI · Radiant</title>
+<meta name="description" content="OORR AI token pricing: $1.80 per 1M input tokens, $3.60 per 1M output tokens.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="../../../assets/favicon.png">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wash" aria-hidden="true"></div>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <a class="brand" href="../../../">
+    <img src="../../../assets/radiant-mark.png" alt="" draggable="false">
+    <b>Radiant</b>
+  </a>
+  <span class="crumb">Docs&nbsp; / &nbsp;<em>OORR AI</em></span>
+  <div class="topbar-end">
+    <a class="ghost-link" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      Menu
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar" id="sidebar" aria-label="Documentation">
+    <p class="sb-title">OORR AI</p>
+    <ul class="sb-list">
+      <li><a href="../">Introduction</a></li>
+      <li><a href="../quickstart/">Quickstart</a></li>
+      <li><a href="../authentication/">Authentication</a></li>
+      <li><a href="../models/">Models</a></li>
+      <li><a href="../chat/">Chat</a></li>
+      <li><a href="../vision/">Vision</a></li>
+      <li><a href="../api-reference/">API Reference</a></li>
+      <li><a href="../pricing/" class="is-current" aria-current="page">Pricing</a></li>
+      <li><a href="../usage/">Usage</a></li>
+      <li><a href="../api-keys/">API Keys</a></li>
+    </ul>
+    <p class="sb-title">Status legend</p>
+    <ul class="sb-legend">
+      <li><span class="pill pill--live">Live</span></li>
+      <li><span class="pill pill--pending">Pending</span></li>
+      <li><span class="pill pill--ui">UI only</span></li>
+    </ul>
+  </nav>
+
+  <main class="content" id="main">
+    <article class="prose">
+      <div class="page-head">
+        <p class="eyebrow">OORR AI</p>
+        <h1>Pricing <span class="pill pill--pending">Billing pending</span></h1>
+      </div>
+
+<p>Published rates for OORR AI, applying to chat and image requests alike.</p>
+
+      <dl class="grid">
+        <div class="price">
+          <dt>Input</dt>
+          <dd>
+            <span class="amount">$1.80</span>
+            <span class="per">per 1M tokens</span>
+          </dd>
+        </div>
+        <div class="price">
+          <dt>Output</dt>
+          <dd>
+            <span class="amount">$3.60</span>
+            <span class="per">per 1M tokens</span>
+          </dd>
+        </div>
+      </dl>
+
+      <div class="note note--warn">
+        <p class="note-title">Rates are published; metering-to-cost is not implemented</p>
+        <p>
+          The service records token counts, but it does <strong>not</strong> compute,
+          store or return a monetary amount, and there is no billing, invoicing or
+          payment path in the deployed API. These rates are the stated commercial
+          terms, not a value read back from the system.
+        </p>
+      </div>
+
+      <h3>Estimating a cost yourself</h3>
+      <p>
+        Because token counts are real, you can price a request client-side from the
+        response. Both figures are billed per million tokens.
+      </p>
+      <div class="codewrap">
+        <div class="codehead"><span class="codelabel">Client-side estimate</span></div>
+        <pre><code>const INPUT_PER_1M = 1.80;
+const OUTPUT_PER_1M = 3.60;
+
+function estimateUsd(res) {
+  const input = (res.inputTokens ?? 0) / 1e6 * INPUT_PER_1M;
+  const output = (res.outputTokens ?? 0) / 1e6 * OUTPUT_PER_1M;
+  return input + output;
+}
+
+// 412 input + 735 output tokens → about $0.00338
+</code></pre>
+      </div>
+      <p>
+        Token fields are optional: when a count is not reported for a request it is
+        absent, so treat a missing count as unknown rather than as zero.
+      </p>
+
+      <nav class="pager" aria-label="Documentation pages">
+        <a class="pager-link pager-prev" href="../api-reference/"><span>Previous</span><b>API Reference</b></a>
+        <a class="pager-link pager-next" href="../usage/"><span>Next</span><b>Usage</b></a>
+      </nav>
+    </article>
+
+    <aside class="toc" id="toc" aria-label="On this page"></aside>
+  </main>
+</div>
+
+<footer class="docfoot">
+  <span>OORR AI API</span>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="../../../">Radiant</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://radiant-iraq.com" target="_blank" rel="noopener">radiant-iraq.com</a>
+  <span class="dot" aria-hidden="true"></span>
+  <a href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+</footer>
+
+<script src="../docs.js"></script>
+</body>
+</html>
