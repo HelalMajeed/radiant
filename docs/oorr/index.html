@@ -60,9 +60,10 @@
       <p class="eyebrow">Radiant · Developer Platform</p>
       <h1>OORR AI API</h1>
       <p class="lede">
-        OORR AI is an Arabic-first tutoring model served by Radiant. This is the
-        reference for its HTTP API: how to call chat and image requests, what the
-        responses contain, how tokens are counted, and which limits apply.
+        OORR AI is an Arabic-first tutoring model served by Radiant. Its current
+        production model is <strong>Sargon&nbsp;1.5</strong>. This is the reference
+        for its HTTP API: how to call chat and image requests, what the responses
+        contain, how tokens are counted, and which limits apply.
       </p>
     </div>
 
@@ -72,16 +73,17 @@
 
       <p>
         OORR AI answers students' questions in Arabic in the voice of an Iraqi
-        teacher, working through problems step by step. Radiant operates the
-        service; the API below is the deployed, production surface.
+        teacher, working through problems step by step. Radiant is the platform that
+        exposes it; <strong>Sargon 1.5</strong> is the model that answers. The API
+        below is the deployed, production surface.
       </p>
 
-      <h3>What the model does today</h3>
+      <h3>What Sargon 1.5 does today</h3>
       <ul>
         <li><strong>Arabic tutoring chat.</strong> Explanatory, step-by-step answers in Modern Standard Arabic, with familiar Iraqi phrasing where it helps.</li>
         <li><strong>Subject and grade scoping.</strong> Optional <code>subject</code> and <code>grade</code> fields steer the answer toward a student's stage and course.</li>
         <li><strong>Educational image understanding.</strong> Send a photo of a question, diagram or worked page and the model reads and explains its educational content.</li>
-        <li><strong>Handwritten maths.</strong> Images marked <code>kind: "handwritten_math"</code> are passed through OCR before the tutor answers.</li>
+        <li><strong>Handwritten maths.</strong> Images marked <code>kind: "handwritten_math"</code> are transcribed before the tutor answers.</li>
         <li><strong>English curriculum books.</strong> A dedicated response policy applies to the two Grade&nbsp;6 scientific English books (student book and activity book).</li>
         <li><strong>Short conversation memory.</strong> Prior turns of the same chat can be supplied with each request.</li>
       </ul>
@@ -267,10 +269,36 @@ print(data["inputTokens"], data["outputTokens"], data["totalTokens"])</code></pr
     <section id="models">
       <h2>Models <span class="pill pill--live">Live</span></h2>
 
+      <h3>Sargon 1.5</h3>
       <p>
-        OORR exposes <strong>tiers</strong>, not model names. Select one with
-        <code>modelTier</code>. There is no public, stable model-id string yet; the
-        response tells you which provider and model actually served the request.
+        OORR AI's current production model for chat, Iraqi curriculum assistance and
+        supported educational image understanding.
+      </p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Field</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Model</td><td>Sargon 1.5</td></tr>
+            <tr><td>Model ID</td><td><code>sargon-1.5</code></td></tr>
+            <tr><td>Capabilities</td><td>Chat · Iraqi curriculum assistance · educational image understanding</td></tr>
+            <tr><td>Status</td><td><span class="pill pill--live">Live</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Every successful response reports <code>"model": "sargon-1.5"</code>. This is a
+        stable public identifier: you integrate against Sargon 1.5, and the
+        infrastructure that executes a request is managed by Radiant and may change
+        without notice or API impact.
+      </p>
+
+      <h3>Capability tiers</h3>
+      <p>
+        <code>modelTier</code> selects how much capability a request is served with.
+        It is a service-level setting on Sargon 1.5, not a different model — the
+        reported <code>model</code> is <code>sargon-1.5</code> in every case.
       </p>
 
       <div class="tablewrap">
@@ -279,17 +307,17 @@ print(data["inputTokens"], data["outputTokens"], data["totalTokens"])</code></pr
           <tbody>
             <tr>
               <td><code>basic</code></td>
-              <td>Default. Text requests route to the primary text provider first, with an automatic fallback on retryable failures.</td>
+              <td>Default. Standard chat and image understanding.</td>
               <td><span class="pill pill--live">Live</span></td>
             </tr>
             <tr>
               <td><code>pro</code></td>
-              <td>Higher-capability reasoning tier, gated by a per-caller trial quota. Returns a <code>proTrial</code> object describing remaining quota.</td>
+              <td>Higher-capability reasoning, gated by a per-caller trial quota. Returns a <code>proTrial</code> object describing remaining quota.</td>
               <td><span class="pill pill--live">Live</span></td>
             </tr>
             <tr>
               <td><code>ultra</code></td>
-              <td>Accepted by the validator only so it can be refused explicitly. Always rejected with <code>503 ULTRA_UNAVAILABLE</code> — never routed to a provider and never silently downgraded.</td>
+              <td>Accepted by the validator only so it can be refused explicitly. Always rejected with <code>503 ULTRA_UNAVAILABLE</code> — never served and never silently downgraded.</td>
               <td><span class="pill pill--pending">Pending</span></td>
             </tr>
           </tbody>
@@ -303,20 +331,22 @@ print(data["inputTokens"], data["outputTokens"], data["totalTokens"])</code></pr
         Sending an unrecognised tier is a <code>400 INVALID_REQUEST</code>.
       </p>
 
-      <h3>Routing is server-side</h3>
-      <p>
-        Provider selection is deterministic and not client-controllable in production:
-        text, vision and OCR paths each have their own primary and fallback. Read
-        <code>provider</code> and <code>model</code> on the response if you need to know
-        what served a given call — for example to reconcile token counts.
-      </p>
-
       <div class="note">
         <p class="note-title">Capabilities by request shape</p>
         <p>
-          Text-only requests use the text path. A request carrying <code>image</code>
-          uses the vision path. <code>image.kind: "handwritten_math"</code> adds an OCR
-          step before the tutor answers.
+          A text-only request is answered as chat. A request carrying
+          <code>image</code> is answered with image understanding.
+          <code>image.kind: "handwritten_math"</code> tells Sargon the image is
+          handwritten mathematics so it is transcribed before being answered.
+        </p>
+      </div>
+
+      <div class="note">
+        <p class="note-title">Execution is managed by Radiant</p>
+        <p>
+          How a request is executed — and on what infrastructure — is not exposed and
+          is not selectable. You send a request to Sargon 1.5 and receive an answer
+          with its token counts; there is no field to read or set that changes this.
         </p>
       </div>
     </section>
@@ -354,8 +384,8 @@ print(data["inputTokens"], data["outputTokens"], data["totalTokens"])</code></pr
   }'</code></pre>
         <pre role="tabpanel" hidden><code>type TutorResponse = {
   answer: string;
-  provider: "deepseek" | "gemini" | "openai";
-  model?: string;
+  /** Always "sargon-1.5". */
+  model: string;
   inputTokens?: number;
   outputTokens?: number;
   totalTokens?: number;
@@ -414,8 +444,7 @@ def ask(message, history):
         <div class="codehead"><span class="codelabel">200 OK</span></div>
         <pre><code>{
   "answer": "وحدة قياس المقاومة هي الأوم (Ω)، وتُعرَّف بأنها...",
-  "provider": "deepseek",
-  "model": "deepseek-chat",
+  "model": "sargon-1.5",
   "inputTokens": 412,
   "outputTokens": 735,
   "totalTokens": 1147,
@@ -482,7 +511,7 @@ event: delta
 data: {"text":"ينص على أن..."}
 
 event: done
-data: {"answer":"قانون أوم ينص على أن...","provider":"deepseek","model":"deepseek-chat","inputTokens":318,"outputTokens":602,"totalTokens":920,"latencyMs":3870,"requestId":"9a2e...","modelTier":"basic"}</code></pre>
+data: {"answer":"قانون أوم ينص على أن...","model":"sargon-1.5","inputTokens":318,"outputTokens":602,"totalTokens":920,"latencyMs":3870,"requestId":"9a2e...","modelTier":"basic"}</code></pre>
         <pre role="tabpanel" hidden><code>const res = await fetch("https://api.oorr.ai/api/tutor/stream", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
@@ -618,7 +647,7 @@ const res = await fetch("https://api.oorr.ai/api/tutor", {
 });
 
 const data = await res.json();
-console.log(data.answer, data.provider);</code></pre>
+console.log(data.answer, data.model);</code></pre>
         <pre role="tabpanel" hidden><code>import base64
 import requests
 
@@ -642,7 +671,7 @@ res = requests.post(
 )
 
 data = res.json()
-print(data["answer"], data["provider"])</code></pre>
+print(data["answer"], data["model"])</code></pre>
       </div>
 
       <div class="note">
@@ -688,8 +717,8 @@ print(data["answer"], data["provider"])</code></pre>
           with <code>modelTier</code>.
         </p>
         <p>
-          A <code>forceProvider</code> field exists for local development and is
-          <strong>ignored entirely in production</strong>. Do not rely on it.
+          Unrecognised fields in the request body are ignored. There is no field that
+          selects or influences how Sargon 1.5 executes your request.
         </p>
       </div>
 
@@ -699,10 +728,9 @@ print(data["answer"], data["provider"])</code></pre>
           <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
           <tbody>
             <tr><td><code>answer</code></td><td>string</td><td>The tutor's answer, in Arabic unless an English-book policy applies.</td></tr>
-            <tr><td><code>provider</code></td><td>string</td><td>Which backend actually served it: <code>deepseek</code>, <code>gemini</code> or <code>openai</code>.</td></tr>
-            <tr><td><code>model</code></td><td>string</td><td>Optional. The provider's model identifier.</td></tr>
-            <tr><td><code>inputTokens</code></td><td>number</td><td>Optional — present when the provider reports it.</td></tr>
-            <tr><td><code>outputTokens</code></td><td>number</td><td>Optional — present when the provider reports it.</td></tr>
+            <tr><td><code>model</code></td><td>string</td><td>The public model identifier. Always <code>sargon-1.5</code>.</td></tr>
+            <tr><td><code>inputTokens</code></td><td>number</td><td>Optional — present when a token count is reported for the request.</td></tr>
+            <tr><td><code>outputTokens</code></td><td>number</td><td>Optional — present when a token count is reported for the request.</td></tr>
             <tr><td><code>totalTokens</code></td><td>number</td><td>Optional. The figure used for daily allowance accounting.</td></tr>
             <tr><td><code>latencyMs</code></td><td>number</td><td>Server-side duration.</td></tr>
             <tr><td><code>requestId</code></td><td>string</td><td>UUID. Quote it in support requests.</td></tr>
@@ -715,10 +743,9 @@ print(data["answer"], data["provider"])</code></pre>
       <h3>Token usage</h3>
       <p>
         Token counts come back on every successful response and, for streaming, on the
-        terminal <code>done</code> event. Each provider call is also persisted
-        server-side as a usage row — <code>inputTokens</code>,
-        <code>outputTokens</code>, <code>totalTokens</code>, <code>provider</code>,
-        <code>model</code>, <code>latencyMs</code>, success, and the request type
+        terminal <code>done</code> event. Each request is also metered server-side —
+        <code>inputTokens</code>, <code>outputTokens</code>, <code>totalTokens</code>,
+        <code>latencyMs</code>, success, and the request type
         (<code>text</code>, <code>vision</code>, <code>math_ocr</code>,
         <code>premium_reasoning</code>).
       </p>
@@ -766,7 +793,7 @@ print(data["answer"], data["provider"])</code></pre>
             <tr><td><code>PRO_TRIAL_LIMIT_REACHED</code></td><td>429</td><td>Pro trial quota exhausted. Includes <code>proTrial</code> and <code>retryAfterSeconds</code>.</td></tr>
             <tr><td><code>PRO_UNAVAILABLE</code></td><td>503</td><td>Pro tier cannot be served right now. Fall back to <code>basic</code>.</td></tr>
             <tr><td><code>ULTRA_UNAVAILABLE</code></td><td>503</td><td><code>ultra</code> is not released. Never downgraded silently.</td></tr>
-            <tr><td><code>PROVIDER_UNAVAILABLE</code></td><td>503</td><td>No configured provider could serve the request, or the answer failed the quality gate twice.</td></tr>
+            <tr><td><code>PROVIDER_UNAVAILABLE</code></td><td>503</td><td>The service could not produce an answer for this request. Retry with backoff.</td></tr>
             <tr><td><code>INTERNAL_ERROR</code></td><td>500</td><td>Unexpected server fault. Retry with backoff; quote the <code>requestId</code>.</td></tr>
           </tbody>
         </table>
@@ -787,7 +814,7 @@ print(data["answer"], data["provider"])</code></pre>
       </div>
       <p>
         The cooldown is enforced atomically and persists across restarts. It is
-        reserved once per accepted request, so an internal provider fallback still
+        reserved once per accepted request, so an internal retry still
         counts as a single request. The server is the single source of truth for the
         pace — mirror <code>Retry-After</code> rather than hard-coding an interval, and
         note that a cooldown storage fault <strong>denies</strong> the request rather
@@ -907,7 +934,7 @@ function estimateUsd(res) {
 </code></pre>
       </div>
       <p>
-        Token fields are optional: a provider that does not report usage leaves them
+        Token fields are optional: when a count is not reported for a request it is
         absent, so treat a missing count as unknown rather than as zero.
       </p>
     </section>
@@ -937,7 +964,7 @@ function estimateUsd(res) {
         </p>
 
         <dl class="grid">
-          <div class="stat"><dt>API requests</dt><dd>—<small>Count of provider calls.</small></dd></div>
+          <div class="stat"><dt>API requests</dt><dd>—<small>Count of API requests.</small></dd></div>
           <div class="stat"><dt>Input tokens</dt><dd>—<small>Sum of <code>inputTokens</code>.</small></dd></div>
           <div class="stat"><dt>Output tokens</dt><dd>—<small>Sum of <code>outputTokens</code>.</small></dd></div>
           <div class="stat"><dt>Total tokens</dt><dd>—<small>The allowance-accounted figure.</small></dd></div>
@@ -961,26 +988,24 @@ function estimateUsd(res) {
 
       <h3>What already exists server-side</h3>
       <p>
-        Every provider call is persisted with the fields below. Building the panel above
+        Every request is metered with the fields below. Building the panel above
         is a matter of exposing a read endpoint over this table — the measurement layer
         is already in place and is billing-ready in the sense that input and output
         tokens are stored separately per call.
       </p>
       <div class="codewrap">
-        <div class="codehead"><span class="codelabel">Recorded per provider call</span></div>
+        <div class="codehead"><span class="codelabel">Metered per request</span></div>
         <pre><code>{
-  "id":          "uuid",
-  "userId":      "student_4821",
-  "provider":    "deepseek",
-  "model":       "deepseek-chat",
-  "inputTokens": 412,
+  "id":           "uuid",
+  "userId":       "student_4821",
+  "model":        "sargon-1.5",
+  "inputTokens":  412,
   "outputTokens": 735,
-  "totalTokens": 1147,
-  "latencyMs":   4210,
-  "success":     true,
-  "createdAt":   "2026-09-23T09:14:02.441Z",
-  "requestType": "text",
-  "fallback":    false
+  "totalTokens":  1147,
+  "latencyMs":    4210,
+  "success":      true,
+  "createdAt":    "2026-09-23T09:14:02.441Z",
+  "requestType":  "text"
 }</code></pre>
       </div>
       <p>
@@ -1047,7 +1072,7 @@ function estimateUsd(res) {
         <li><strong>Shown once.</strong> The full secret is returned only in the response that creates it, and is never retrievable again.</li>
         <li><strong>Stored hashed.</strong> Only a hash is persisted, matching how the existing service already stores session tokens and one-time codes.</li>
         <li><strong>Masked thereafter.</strong> Listings return a prefix and last four characters only — enough to tell keys apart, never enough to use one.</li>
-        <li><strong>Renameable, revocable.</strong> A label can change freely; revocation is immediate and irreversible, and a revoked key is rejected before any provider call.</li>
+        <li><strong>Renameable, revocable.</strong> A label can change freely; revocation is immediate and irreversible, and a revoked key is rejected before the request is served.</li>
         <li><strong>Attributable.</strong> Rate limits, daily allowances and usage rows key off the API key instead of a self-declared <code>userId</code>.</li>
       </ul>
 
