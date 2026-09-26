@@ -14,6 +14,10 @@
  * refresh of /docs/oorr/usage. Separate files work on any static host with zero
  * configuration, and back/forward comes free from the browser.
  *
+ * The shell is the "academy console" chrome: the animated stage, the numbered
+ * module rail, the DNA-strand divider, the status-legend diagnostics module and
+ * the page-head reticle. Presentation lives in docs.css; behaviour in docs.js.
+ *
  * Usage:  node docs/oorr/build.mjs
  *
  * The generated output is committed, so deployment stays pure-static — running
@@ -51,10 +55,17 @@ const DESCRIPTIONS = {
   chat: "The OORR AI chat endpoint, its response shape, and Server-Sent Event streaming.",
   vision: "Send an image with your request for educational image understanding.",
   reference: "Request parameters, response structure, token usage, error codes and rate limits.",
-  pricing: "OORR AI token pricing: $1.80 per 1M input tokens, $3.60 per 1M output tokens.",
+  pricing: "OORR AI token pricing: $3.66 per 1M input tokens, $8.35 per 1M output tokens.",
   usage: "Request, token and cost reporting for the OORR AI API.",
   keys: "Create, mask, rename and revoke OORR AI API keys.",
 };
+
+/** The three states the docs use, and what each one promises. */
+const LEGEND = [
+  { key: "live",    label: "Live",    note: "Deployed and callable" },
+  { key: "pending", label: "Pending", note: "Specified, not shipped" },
+  { key: "ui",      label: "UI only", note: "Interface shell, no backend" },
+];
 
 const bySourceId = new Map(PAGES.map((p) => [p.id, p]));
 
@@ -71,6 +82,9 @@ function esc(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+
+/** Two-digit module number: pages read as a numbered course. */
+const pad = (n) => String(n).padStart(2, "0");
 
 /** Pull one `<section id="...">…</section>` out of the source document. */
 function extractSection(source, id) {
@@ -104,25 +118,113 @@ function rewriteCrossLinks(html, page) {
   });
 }
 
+/**
+ * The strand divider between the module list and the legend: two sine strands
+ * sampled into polylines, with rungs drawn between them at matching x. Both are
+ * generated from one formula so the rungs always land exactly on the strands.
+ * The animation lives in docs.css — here we only emit geometry, plus an index
+ * per rung so the wave can be staggered.
+ */
+function helixSvg() {
+  const W = 240, MID = 22, AMP = 15, PERIOD = 120;
+  const at = (x) => Math.sin((x / PERIOD) * Math.PI * 2) * AMP;
+
+  const a = [];
+  const b = [];
+  for (let x = 0; x <= W; x += 4) {
+    const y = at(x);
+    a.push(`${x},${(MID - y).toFixed(1)}`);
+    b.push(`${x},${(MID + y).toFixed(1)}`);
+  }
+
+  const rungs = [];
+  let i = 0;
+  for (let x = 6; x <= W - 6; x += 9, i += 1) {
+    const y = at(x);
+    rungs.push(
+      `<line x1="${x}" y1="${(MID - y).toFixed(1)}" x2="${x}" y2="${(MID + y).toFixed(1)}" ` +
+      `style="--i:${i};transform-origin:${x}px ${MID}px"/>`
+    );
+  }
+
+  return `    <div class="helix" aria-hidden="true">
+      <svg viewBox="0 0 ${W} 44" preserveAspectRatio="none" role="presentation">
+        <g class="rungs">${rungs.join("")}</g>
+        <polyline class="strand strand--a" points="${a.join(" ")}"/>
+        <polyline class="strand strand--b" points="${b.join(" ")}"/>
+      </svg>
+    </div>`;
+}
+
+/**
+ * The status legend, as a diagnostics module rather than a row of swatches.
+ * Each entry is a real control: docs.js uses `data-status` to trace every pill
+ * of that status through the page while the entry is hovered, focused or
+ * pinned, which is what makes the legend worth its space on every page.
+ */
+function legend() {
+  const glyphs = {
+    live: '<i class="g-core"></i><i class="g-ring"></i><i class="g-ring g-ring--2"></i>',
+    pending: '<i class="g-orbit"></i><i class="g-sat"></i>',
+    ui: '<i class="g-wire"></i><i class="g-wire g-wire--2"></i>',
+  };
+
+  const rows = LEGEND.map((s) => `        <li>
+          <button class="lg lg--${s.key}" type="button" data-status="${s.key}" aria-pressed="false">
+            <span class="lg-glyph" aria-hidden="true">${glyphs[s.key]}</span>
+            <span class="lg-text"><b>${s.label}</b><em>${s.note}</em></span>
+            <span class="lg-track" aria-hidden="true"><i></i></span>
+          </button>
+        </li>`).join("\n");
+
+  return `    <section class="legend" aria-labelledby="legend-title">
+      <div class="legend-frame" aria-hidden="true"></div>
+      <header class="legend-head">
+        <span class="legend-title" id="legend-title">Status legend</span>
+        <span class="legend-led" aria-hidden="true"></span>
+      </header>
+      <ul class="legend-list">
+${rows}
+      </ul>
+      <p class="legend-foot"><span class="kbd">hover</span> to trace on this page</p>
+    </section>`;
+}
+
 /** The shared sidebar, with the current page marked. */
 function sidebar(current) {
   const up = upToDocsRoot(current);
-  const items = PAGES.map((p) => {
+  const items = PAGES.map((p, i) => {
     const href = p.dir === "" ? up || "./" : `${up}${p.dir}/`;
     const isCurrent = p.id === current.id;
-    return `      <li><a href="${href}"${isCurrent ? ' class="is-current" aria-current="page"' : ""}>${p.label}</a></li>`;
+    return `        <li><a href="${href}"${isCurrent ? ' class="is-current" aria-current="page"' : ""}>` +
+      `<i class="sb-idx">${pad(i + 1)}</i>` +
+      `<span class="sb-label">${p.label}</span>` +
+      `<span class="sb-mark" aria-hidden="true"></span></a></li>`;
   }).join("\n");
 
-  return `    <p class="sb-title">OORR AI</p>
-    <ul class="sb-list">
+  return `    <p class="sb-title"><span>Curriculum</span><b>${PAGES.length} modules</b></p>
+    <ol class="sb-list">
 ${items}
-    </ul>
-    <p class="sb-title">Status legend</p>
-    <ul class="sb-legend">
-      <li><span class="pill pill--live">Live</span></li>
-      <li><span class="pill pill--pending">Pending</span></li>
-      <li><span class="pill pill--ui">UI only</span></li>
-    </ul>`;
+    </ol>
+
+${helixSvg()}
+
+${legend()}`;
+}
+
+/** The page head's orbital instrument. Decorative; hidden on narrow screens. */
+function reticle() {
+  return `        <svg class="reticle" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="r-outer" cx="60" cy="60" r="56"/>
+          <circle class="r-mid" cx="60" cy="60" r="44"/>
+          <circle class="r-inner" cx="60" cy="60" r="30"/>
+          <line class="r-cross" x1="60" y1="0" x2="60" y2="14"/>
+          <line class="r-cross" x1="60" y1="106" x2="60" y2="120"/>
+          <line class="r-cross" x1="0" y1="60" x2="14" y2="60"/>
+          <line class="r-cross" x1="106" y1="60" x2="120" y2="60"/>
+          <circle class="r-core" cx="60" cy="60" r="3.4"/>
+          <g class="r-sat"><circle cx="60" cy="16" r="2.6"/></g>
+        </svg>`;
 }
 
 /** Previous / next links, so the reading order survives the page split. */
@@ -134,11 +236,14 @@ function pager(index) {
   const up = upToDocsRoot(current);
   const href = (p) => (p.dir === "" ? up || "./" : `${up}${p.dir}/`);
 
+  const arrowL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l-6 6 6 6"/></svg>';
+  const arrowR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6l6 6-6 6"/></svg>';
+
   const left = prev
-    ? `<a class="pager-link pager-prev" href="${href(prev)}"><span>Previous</span><b>${prev.label}</b></a>`
+    ? `<a class="pager-link pager-prev" href="${href(prev)}"><span>${arrowL}Previous</span><b>${prev.label}</b></a>`
     : `<span></span>`;
   const right = next
-    ? `<a class="pager-link pager-next" href="${href(next)}"><span>Next</span><b>${next.label}</b></a>`
+    ? `<a class="pager-link pager-next" href="${href(next)}"><span>Next${arrowR}</span><b>${next.label}</b></a>`
     : `<span></span>`;
   return `\n      <nav class="pager" aria-label="Documentation pages">\n        ${left}\n        ${right}\n      </nav>\n`;
 }
@@ -161,29 +266,40 @@ function render(page, index, lede) {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${esc(page.title)} — OORR AI · Radiant</title>
 <meta name="description" content="${esc(DESCRIPTIONS[page.id] ?? "")}">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#04050a">
+<meta name="color-scheme" content="dark">
 <link rel="icon" type="image/png" href="${site}assets/favicon.png">
 <link rel="stylesheet" href="${docs}docs.css">
 </head>
-<body>
+<body data-page="${page.id}">
 
-<div class="wash" aria-hidden="true"></div>
+<div class="stage" aria-hidden="true">
+  <div class="stage-grid"></div>
+  <div class="stage-aurora"></div>
+  <canvas class="stage-net" id="stagenet"></canvas>
+  <div class="stage-vignette"></div>
+</div>
 
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="topbar">
   <a class="brand" href="${site}">
-    <img src="${site}assets/radiant-mark.png" alt="" draggable="false">
+    <span class="brand-orb" aria-hidden="true"><img src="${site}assets/radiant-mark.png" alt="" draggable="false"></span>
     <b>Radiant</b>
   </a>
-  <span class="crumb">Docs&nbsp; / &nbsp;<em>OORR AI</em></span>
+  <span class="crumb">Docs<i aria-hidden="true"></i><em>OORR AI</em></span>
   <div class="topbar-end">
+    <span class="uplink" title="api.oorr.ai is live">
+      <i class="uplink-dot" aria-hidden="true"></i>Uplink
+      <em class="uplink-bars" aria-hidden="true"><s></s><s></s><s></s><s></s></em>
+    </span>
     <a class="ghost-link" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
     <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       Menu
     </button>
   </div>
+  <div class="readbar" id="readbar" aria-hidden="true"><i></i></div>
 </header>
 
 <div class="layout">
@@ -195,8 +311,15 @@ ${sidebar(page)}
   <main class="content" id="main">
     <article class="prose">
       <div class="page-head">
-        <p class="eyebrow">OORR AI</p>
+        <div class="ph-top">
+          <p class="eyebrow"><i aria-hidden="true"></i>OORR AI</p>
+          <span class="ph-index" aria-label="Module ${index + 1} of ${PAGES.length}">
+            <b>${pad(index + 1)}</b><i>/</i>${pad(PAGES.length)}
+          </span>
+        </div>
         <h1>${headingHtml}</h1>${ledeHtml}
+        <div class="ph-rule" aria-hidden="true"><i></i></div>
+${reticle()}
       </div>
 
 ${content}

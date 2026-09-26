@@ -1,5 +1,11 @@
-/* OORR AI docs — copy buttons, language tabs, compact mobile nav, scroll-spy
-   and a deliberately small syntax highlighter. No dependencies, no network. */
+/* OORR AI docs — copy buttons, language tabs, compact mobile nav, scroll-spy,
+   a deliberately small syntax highlighter, and the console's motion layer:
+   the constellation stage, scroll-reveal, the reading bar and the status-legend
+   trace. No dependencies, no network.
+
+   Every moving part is optional. If scripting fails or motion is reduced, the
+   page still renders complete and static — nothing here is load-bearing for
+   reading the documentation. */
 (function () {
   'use strict';
 
@@ -7,6 +13,9 @@
   var $$ = function (sel, root) {
     return Array.prototype.slice.call((root || document).querySelectorAll(sel));
   };
+
+  var MOTION_OK = !(window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   /* ---------------------------------------------------------------- highlight
      One pass over the raw source. Each match is escaped as it is wrapped, and
@@ -246,6 +255,13 @@
   var toc = $('#toc');
   var headings = $$('.prose h3').filter(function (h) { return h.textContent.trim() !== ''; });
 
+  // A heading may carry a status pill; the rail wants the words, not the badge.
+  function headingLabel(h) {
+    var clone = h.cloneNode(true);
+    $$('.pill', clone).forEach(function (pill) { pill.remove(); });
+    return clone.textContent.trim();
+  }
+
   function slugify(text, index) {
     var base = text
       .toLowerCase()
@@ -261,7 +277,7 @@
 
     headings.forEach(function (h, i) {
       if (!h.id) {
-        var slug = slugify(h.textContent, i);
+        var slug = slugify(headingLabel(h), i);
         while (seen[slug]) slug += '-' + i;   // ids must stay unique
         seen[slug] = true;
         h.id = slug;
@@ -269,7 +285,7 @@
       var li = document.createElement('li');
       var a = document.createElement('a');
       a.href = '#' + h.id;
-      a.textContent = h.textContent.trim();
+      a.textContent = headingLabel(h);
       li.appendChild(a);
       list.appendChild(li);
     });
@@ -279,6 +295,12 @@
     title.textContent = 'On this page';
     toc.appendChild(title);
     toc.appendChild(list);
+
+    // The light that rides the rail alongside the active entry.
+    var dot = document.createElement('i');
+    dot.className = 'toc-dot';
+    dot.setAttribute('aria-hidden', 'true');
+    toc.appendChild(dot);
     toc.classList.add('is-active');
 
     var links = $$('a', toc);
@@ -295,7 +317,9 @@
       if (atBottom) current = headings[headings.length - 1];
 
       links.forEach(function (a) {
-        a.classList.toggle('is-current', a.getAttribute('href') === '#' + current.id);
+        var on = a.getAttribute('href') === '#' + current.id;
+        a.classList.toggle('is-current', on);
+        if (on) toc.style.setProperty('--y', (a.offsetTop + a.offsetHeight / 2) + 'px');
       });
     };
 
@@ -312,6 +336,257 @@
       a.addEventListener('click', function () { setTimeout(mark, 700); });
     });
     mark();
+  }
+
+  /* --------------------------------------------------------------- reading bar
+     Progress through the article, drawn on the underside of the top bar. */
+
+  var readbar = $('#readbar i');
+  if (readbar) {
+    var ticking = false;
+    var drawBar = function () {
+      var doc = document.documentElement;
+      var span = doc.scrollHeight - window.innerHeight;
+      var pct = span > 0 ? (window.scrollY / span) * 100 : 0;
+      readbar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+    };
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () { ticking = false; drawBar(); });
+    }, { passive: true });
+    window.addEventListener('resize', drawBar);
+    drawBar();
+  }
+
+  /* ------------------------------------------------------------ legend trace
+     Pointing at a legend entry traces that status through the whole page:
+     matching pills light up, the rest recede. Clicking pins the trace, so it
+     survives the pointer leaving the sidebar; Escape or a second click clears
+     it. Keyboard focus does the same as hover. */
+
+  var legendBtns = $$('.lg');
+  if (legendBtns.length) {
+    var pinned = null;
+
+    var applyTrace = function (status) {
+      if (status) document.body.setAttribute('data-trace', status);
+      else document.body.removeAttribute('data-trace');
+    };
+
+    var pin = function (btn, status) {
+      pinned = status;
+      legendBtns.forEach(function (b) {
+        b.setAttribute('aria-pressed', b === btn && status ? 'true' : 'false');
+      });
+      applyTrace(status);
+    };
+
+    legendBtns.forEach(function (btn) {
+      var status = btn.getAttribute('data-status');
+
+      var enter = function () { if (!pinned) applyTrace(status); };
+      var leave = function () { applyTrace(pinned); };
+
+      btn.addEventListener('mouseenter', enter);
+      btn.addEventListener('mouseleave', leave);
+      btn.addEventListener('focus', enter);
+      btn.addEventListener('blur', leave);
+      btn.addEventListener('click', function () {
+        pin(btn, pinned === status ? null : status);
+      });
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && pinned) pin(null, null);
+    });
+  }
+
+  /* --------------------------------------------------------- idle stat tiles
+     A tile whose figure is an em dash has no data source behind it. Say so
+     visually rather than printing a bare dash. */
+
+  $$('.stat').forEach(function (stat) {
+    var dd = $('dd', stat);
+    if (!dd) return;
+    var lead = (dd.firstChild && dd.firstChild.nodeType === 3)
+      ? dd.firstChild.textContent.trim() : '';
+    if (lead === '—' || lead === '-') stat.classList.add('is-idle');
+  });
+
+  /* ------------------------------------------------------- pointer spotlight
+     Cards track the pointer with a soft light. One delegated listener, one
+     rAF per frame, and nothing at all when motion is reduced. */
+
+  if (MOTION_OK && window.matchMedia('(pointer: fine)').matches) {
+    var LIT = '.stat,.price,.panel,.pager-link,.keyrow';
+    var pending = null;
+    var lightQueued = false;
+    document.addEventListener('pointermove', function (e) {
+      var card = e.target.closest ? e.target.closest(LIT) : null;
+      if (!card) return;
+      pending = { card: card, x: e.clientX, y: e.clientY };
+      if (lightQueued) return;
+      lightQueued = true;
+      requestAnimationFrame(function () {
+        lightQueued = false;
+        if (!pending) return;
+        var r = pending.card.getBoundingClientRect();
+        pending.card.style.setProperty('--mx', (pending.x - r.left) + 'px');
+        pending.card.style.setProperty('--my', (pending.y - r.top) + 'px');
+        pending = null;
+      });
+    }, { passive: true });
+  }
+
+  /* --------------------------------------------------------- reveal on scroll
+     Blocks arrive with a short focus pull, staggered within whatever batch
+     enters together. Code blocks and price cards also fire their one-shot
+     flourish here. `.rv` is only ever added from script, so with JS off — or
+     motion reduced — the article is simply already there. */
+
+  var revealables = $$([
+    '.prose > h2', '.prose > h3', '.prose > h4', '.prose > p',
+    '.prose > ul', '.prose > ol', '.prose > .note', '.prose > .codewrap',
+    '.prose > .tablewrap', '.prose > .grid', '.prose > .panel',
+    '.prose > .keys', '.prose > .empty', '.prose > .pager'
+  ].join(','));
+
+  function flourish(el) {
+    if (el.classList.contains('codewrap')) el.classList.add('is-lit');
+    if (el.classList.contains('price')) el.classList.add('is-lit');
+    $$('.price', el).forEach(function (p) { p.classList.add('is-lit'); });
+    $$('.codewrap', el).forEach(function (c) { c.classList.add('is-lit'); });
+  }
+
+  if (MOTION_OK && 'IntersectionObserver' in window && revealables.length) {
+    var inView = function (el) {
+      var r = el.getBoundingClientRect();
+      return r.top < window.innerHeight * 0.92 && r.bottom > 0;
+    };
+
+    revealables.forEach(function (el) { el.classList.add('rv'); });
+
+    // Everything already on screen animates in as one opening sequence.
+    var opening = revealables.filter(inView);
+    opening.forEach(function (el, i) {
+      el.style.setProperty('--d', Math.min(i, 6));
+    });
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        opening.forEach(function (el) { el.classList.add('rv-in'); flourish(el); });
+      });
+    });
+
+    var io = new IntersectionObserver(function (entries) {
+      var step = 0;
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var el = entry.target;
+        el.style.setProperty('--d', Math.min(step, 4));
+        step += 1;
+        el.classList.add('rv-in');
+        flourish(el);
+        io.unobserve(el);
+      });
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.06 });
+
+    revealables.forEach(function (el) {
+      if (opening.indexOf(el) === -1) io.observe(el);
+    });
+  } else {
+    revealables.forEach(flourish);
+  }
+
+  /* ------------------------------------------------------------- constellation
+     The neural field behind the page: slow-drifting nodes that link up when
+     they pass near one another. Decorative, so it is skipped entirely on
+     narrow screens, under reduced motion, and while the tab is hidden. */
+
+  var canvas = $('#stagenet');
+  if (canvas && MOTION_OK && window.innerWidth >= 760) {
+    try {
+      var ctx = canvas.getContext('2d');
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var nodes = [];
+      var w = 0, h = 0, raf = 0;
+      var LINK = 132;
+
+      var seed = function () {
+        w = canvas.clientWidth;
+        h = canvas.clientHeight;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        var count = Math.min(72, Math.round((w * h) / 26000));
+        nodes = [];
+        for (var i = 0; i < count; i++) {
+          nodes.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            vx: (Math.random() - 0.5) * 0.16,
+            vy: (Math.random() - 0.5) * 0.16,
+            r: Math.random() * 1.3 + 0.5,
+            violet: Math.random() > 0.62
+          });
+        }
+      };
+
+      var frame = function () {
+        ctx.clearRect(0, 0, w, h);
+
+        for (var i = 0; i < nodes.length; i++) {
+          var n = nodes[i];
+          n.x += n.vx;
+          n.y += n.vy;
+          // Wrap rather than bounce: no node ever piles up against an edge.
+          if (n.x < -10) n.x = w + 10; else if (n.x > w + 10) n.x = -10;
+          if (n.y < -10) n.y = h + 10; else if (n.y > h + 10) n.y = -10;
+
+          for (var j = i + 1; j < nodes.length; j++) {
+            var m = nodes[j];
+            var dx = n.x - m.x, dy = n.y - m.y;
+            var d2 = dx * dx + dy * dy;
+            if (d2 > LINK * LINK) continue;
+            var a = (1 - Math.sqrt(d2) / LINK) * 0.17;
+            ctx.strokeStyle = 'rgba(122,164,255,' + a.toFixed(3) + ')';
+            ctx.lineWidth = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(n.x, n.y);
+            ctx.lineTo(m.x, m.y);
+            ctx.stroke();
+          }
+
+          ctx.fillStyle = n.violet ? 'rgba(157,123,255,.55)' : 'rgba(120,175,255,.5)';
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        raf = requestAnimationFrame(frame);
+      };
+
+      var start = function () { if (!raf) raf = requestAnimationFrame(frame); };
+      var stop = function () { cancelAnimationFrame(raf); raf = 0; };
+
+      seed();
+      start();
+
+      var resizeQueued = false;
+      window.addEventListener('resize', function () {
+        if (resizeQueued) return;
+        resizeQueued = true;
+        setTimeout(function () { resizeQueued = false; seed(); }, 220);
+      });
+
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) stop(); else start();
+      });
+    } catch (e) {
+      // A decorative layer is never worth a broken page.
+      canvas.style.display = 'none';
+    }
   }
 
 })();
