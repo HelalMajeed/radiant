@@ -895,14 +895,14 @@ def ask_with_retry(body, attempts=3):
         <div class="price">
           <dt>Input</dt>
           <dd>
-            <span class="amount">$1.80</span>
+            <span class="amount">$3.66</span>
             <span class="per">per 1M tokens</span>
           </dd>
         </div>
         <div class="price">
           <dt>Output</dt>
           <dd>
-            <span class="amount">$3.60</span>
+            <span class="amount">$8.35</span>
             <span class="per">per 1M tokens</span>
           </dd>
         </div>
@@ -925,8 +925,8 @@ def ask_with_retry(body, attempts=3):
       </p>
       <div class="codewrap">
         <div class="codehead"><span class="codelabel">Client-side estimate</span></div>
-        <pre><code>const INPUT_PER_1M = 1.80;
-const OUTPUT_PER_1M = 3.60;
+        <pre><code>const INPUT_PER_1M = 3.66;
+const OUTPUT_PER_1M = 8.35;
 
 function estimateUsd(res) {
   const input = (res.inputTokens ?? 0) / 1e6 * INPUT_PER_1M;
@@ -934,7 +934,7 @@ function estimateUsd(res) {
   return input + output;
 }
 
-// 412 input + 735 output tokens → about $0.00338
+// 412 input + 735 output tokens → about $0.00765
 </code></pre>
       </div>
       <p>

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pricing — OORR AI · Radiant</title>
-<meta name="description" content="OORR AI token pricing: $1.80 per 1M input tokens, $3.60 per 1M output tokens.">
+<meta name="description" content="OORR AI token pricing: $3.66 per 1M input tokens, $8.35 per 1M output tokens.">
 <meta name="theme-color" content="#000000">
 <link rel="icon" type="image/png" href="../../../assets/favicon.png">
 <link rel="stylesheet" href="../docs.css">
@@ -67,14 +67,14 @@
         <div class="price">
           <dt>Input</dt>
           <dd>
-            <span class="amount">$1.80</span>
+            <span class="amount">$3.66</span>
             <span class="per">per 1M tokens</span>
           </dd>
         </div>
         <div class="price">
           <dt>Output</dt>
           <dd>
-            <span class="amount">$3.60</span>
+            <span class="amount">$8.35</span>
             <span class="per">per 1M tokens</span>
           </dd>
         </div>
@@ -97,8 +97,8 @@
       </p>
       <div class="codewrap">
         <div class="codehead"><span class="codelabel">Client-side estimate</span></div>
-        <pre><code>const INPUT_PER_1M = 1.80;
-const OUTPUT_PER_1M = 3.60;
+        <pre><code>const INPUT_PER_1M = 3.66;
+const OUTPUT_PER_1M = 8.35;
 
 function estimateUsd(res) {
   const input = (res.inputTokens ?? 0) / 1e6 * INPUT_PER_1M;
@@ -106,7 +106,7 @@ function estimateUsd(res) {
   return input + output;
 }
 
-// 412 input + 735 output tokens → about $0.00338
+// 412 input + 735 output tokens → about $0.00765
 </code></pre>
       </div>
       <p>
