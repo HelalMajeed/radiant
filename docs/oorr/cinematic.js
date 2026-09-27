@@ -89,7 +89,8 @@
       const {x,y,col,row} = positions[i];
       const pulse = .7 + Math.sin(time * .7 + p.phase) * .3;
       const alpha = (.22 + p.depth * .5) * pulse;
-      if (i % 4 === 0) {
+      // A small extra set of link origins fills gaps without raising the link cap.
+      if (i % 4 === 0 || i % 20 === 1) {
         const neighbors = [];
         for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
           for (const neighbor of cells.get(`${col + dx},${row + dy}`) || []) {
