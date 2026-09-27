@@ -7,12 +7,15 @@
 <meta name="description" content="One autonomous multi-agent financial platform. Primary hackathon challenge: Bill Pay &amp; Transfer Agent, native to Iraqi Arabic.">
 <link rel="preload" href="./assets/zain-bold.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="./presentation.css">
+<link rel="stylesheet" href="./motion.css">
+<script defer src="./motion.js"></script>
 <link rel="icon" href="./assets/edfaa-zain-mark.webp" type="image/webp">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 
 <nav class="nav" aria-label="Hackathon page">
+  <span class="reading-progress" aria-hidden="true"></span>
   <div class="nav-in">
     <div class="masthead">
       <a class="brand" href="#overview" aria-label="منصة ادفع زين — overview">
@@ -21,6 +24,7 @@
       </a>
       <span class="topic-label">TOPIC 04 / BILL PAY &amp; TRANSFER</span>
     </div>
+    <div class="nav-toolbar">
     <ul class="section-nav">
       <li><a href="#problem">Problem</a></li>
       <li><a href="#solution">Solution</a></li>
@@ -32,6 +36,10 @@
       <li><a href="#evaluation">Evaluation</a></li>
       <li><a href="#scope">Scope</a></li>
     </ul>
+    <button class="motion-toggle" type="button" aria-label="Pause animations" aria-pressed="false" hidden>
+      <span class="motion-icon" aria-hidden="true"></span><span class="motion-label">Motion on</span>
+    </button>
+    </div>
   </div>
 </nav>
 
@@ -43,14 +51,25 @@
     <div class="hero-grid">
       <div class="hero-copy">
         <div class="kicker">Agentic AI Iraq Hackathon / 2026</div>
-        <h1>Bill Pay &amp;<br>Transfer Agent</h1>
+        <h1><span class="title-line"><span>Bill Pay &amp;</span></span> <span class="title-line"><span>Transfer Agent</span></span></h1>
     <p class="value">
       A user states a financial goal in everyday Iraqi Arabic. One orchestrator plans it, specialist agents
       carry it out, and a verification layer confirms the action matches the request — before any money moves.
     </p>
       </div>
       <figure class="hero-art" aria-hidden="true">
-        <img src="./assets/robotic-dollar.webp" width="1254" height="1254" alt="" fetchpriority="high">
+        <div class="dollar-stage">
+          <div class="dollar-ambient"></div>
+          <div class="dollar-shadow"></div>
+          <div class="dollar-depth">
+            <div class="dollar-orbit"><span class="orbit-track"></span></div>
+            <div class="dollar-orbit dollar-orbit--second"><span class="orbit-track"></span></div>
+            <div class="dollar-float">
+              <img src="./assets/robotic-dollar.webp" width="768" height="768" alt="" fetchpriority="high">
+              <span class="dollar-glint"></span>
+            </div>
+          </div>
+        </div>
       </figure>
     </div>
     <div class="chips">
@@ -483,38 +502,5 @@
   </div>
 </footer>
 
-<script>
-(function () {
-  var links = Array.from(document.querySelectorAll('.section-nav a[href^="#"]'));
-  var sections = links.map(function (link) {
-    return { link: link, section: document.getElementById(link.hash.slice(1)) };
-  }).filter(function (item) { return item.section; });
-
-  function markActive(active) {
-    links.forEach(function (link) {
-      var current = link === active;
-      link.classList.toggle('on', current);
-      if (current) link.setAttribute('aria-current', 'location');
-      else link.removeAttribute('aria-current');
-    });
-  }
-  var pending = false;
-  function updateActive() {
-    var active = null;
-    var threshold = document.querySelector('.nav').getBoundingClientRect().height + 100;
-    sections.forEach(function (item) {
-      if (item.section.getBoundingClientRect().top <= threshold) active = item.link;
-    });
-    markActive(active);
-    pending = false;
-  }
-  window.addEventListener('scroll', function () {
-    if (!pending) { pending = true; window.requestAnimationFrame(updateActive); }
-  }, { passive: true });
-  window.addEventListener('resize', updateActive);
-  window.addEventListener('hashchange', updateActive);
-  updateActive();
-})();
-</script>
 </body>
 </html>
