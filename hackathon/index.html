@@ -3,253 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Radiant — Autonomous Financial Operating System</title>
+<title>ادفع زين — Bill Pay &amp; Transfer Agent</title>
 <meta name="description" content="One autonomous multi-agent financial platform. Primary hackathon challenge: Bill Pay &amp; Transfer Agent, native to Iraqi Arabic.">
-<style>
-:root{
-  --ink:#0B1220;
-  --text:#3B4555;
-  --muted:#6B7686;
-  --faint:#95A0AE;
-  --bg:#FAFAFB;
-  --surface:#FFFFFF;
-  --line:#E5E8EE;
-  --line-soft:#EFF1F5;
-  --accent:#0E7C66;
-  --accent-soft:#E9F4F1;
-  --accent-line:#BFDFD6;
-  --amber:#9A6209;
-  --amber-soft:#FBF3E6;
-  --amber-line:#EBD9B6;
-  --slate-soft:#F3F5F8;
-  --radius:14px;
-  --maxw:1080px;
-  --mono:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
-  --ar:"Noto Naskh Arabic","Geeza Pro","Segoe UI",Tahoma,serif;
-}
-@media (prefers-color-scheme: dark){
-  :root{
-    --ink:#F2F5F9; --text:#B9C2CE; --muted:#8B96A5; --faint:#6F7A89;
-    --bg:#0A0E14; --surface:#111722; --line:#212939; --line-soft:#1A2130;
-    --accent:#4FC2A5; --accent-soft:#11241F; --accent-line:#255045;
-    --amber:#D9A75A; --amber-soft:#241D10; --amber-line:#4A3B1E; --slate-soft:#161C27;
-  }
-}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{
-  margin:0; background:var(--bg); color:var(--text);
-  font-family:var(--sans); font-size:16px; line-height:1.6;
-  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-}
-h1,h2,h3,h4{color:var(--ink); margin:0; font-weight:640; letter-spacing:-0.022em; line-height:1.18}
-h1{font-size:clamp(2.1rem,5.2vw,3.35rem); letter-spacing:-0.035em}
-h2{font-size:clamp(1.4rem,2.6vw,1.85rem)}
-h3{font-size:1.02rem; letter-spacing:-0.012em}
-h4{font-size:.9rem; letter-spacing:-0.005em}
-p{margin:0}
-a{color:inherit}
-.wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px}
-section{padding:68px 0; border-top:1px solid var(--line-soft)}
-section:first-of-type{border-top:0}
-
-/* ---- nav ---- */
-.nav{
-  position:sticky; top:0; z-index:20; background:color-mix(in srgb,var(--bg) 88%, transparent);
-  backdrop-filter:saturate(180%) blur(12px); border-bottom:1px solid var(--line-soft);
-}
-.nav-in{max-width:var(--maxw); margin:0 auto; padding:12px 24px; display:flex; align-items:center; gap:22px}
-.brand{display:flex; align-items:center; gap:9px; font-weight:660; color:var(--ink); letter-spacing:-0.02em; font-size:.95rem; text-decoration:none}
-a.brand:hover .dot{transform:scale(1.25)}
-a.brand .dot{transition:transform .25s ease}
-.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent); flex:none}
-.nav ul{display:flex; gap:20px; list-style:none; margin:0 0 0 auto; padding:0; overflow-x:auto; scrollbar-width:none}
-.nav ul::-webkit-scrollbar{display:none}
-.nav a{color:var(--muted); text-decoration:none; font-size:.83rem; white-space:nowrap; padding:4px 0; border-bottom:1.5px solid transparent}
-.nav a:hover{color:var(--ink)}
-.nav a.on{color:var(--ink); border-bottom-color:var(--accent)}
-@media(max-width:720px){ .nav ul{display:none} }
-
-/* ---- shared bits ---- */
-.eyebrow{
-  font-family:var(--mono); font-size:.695rem; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--faint); margin-bottom:14px;
-}
-.lede{font-size:1.02rem; color:var(--muted); max-width:62ch; margin-top:12px}
-.grid{display:grid; gap:14px}
-.g2{grid-template-columns:repeat(2,1fr)}
-.g3{grid-template-columns:repeat(3,1fr)}
-.g4{grid-template-columns:repeat(4,1fr)}
-@media(max-width:860px){ .g3,.g4{grid-template-columns:repeat(2,1fr)} }
-@media(max-width:560px){ .g2,.g3,.g4{grid-template-columns:1fr} }
-.card{
-  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
-  padding:20px 20px 19px;
-}
-.card p{font-size:.875rem; color:var(--muted); margin-top:7px}
-.card .num{font-family:var(--mono); font-size:.7rem; color:var(--faint); display:block; margin-bottom:9px}
-.tag{
-  display:inline-flex; align-items:center; gap:6px; font-family:var(--mono);
-  font-size:.66rem; letter-spacing:.07em; text-transform:uppercase;
-  padding:4px 9px; border-radius:100px; border:1px solid var(--line); color:var(--muted);
-  background:var(--surface);
-}
-.tag.primary{background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent)}
-.tag.gate{background:var(--amber-soft); border-color:var(--amber-line); color:var(--amber)}
-.ar{font-family:var(--ar); direction:rtl; unicode-bidi:isolate; font-size:1.02rem; color:var(--ink); line-height:1.75}
-
-/* ---- hero ---- */
-.hero{padding:64px 0 60px}
-.hero .kicker{
-  display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-size:.7rem;
-  letter-spacing:.1em; text-transform:uppercase; color:var(--accent);
-  background:var(--accent-soft); border:1px solid var(--accent-line);
-  padding:5px 11px; border-radius:100px; margin-bottom:22px;
-}
-.hero h1 span{color:var(--muted)}
-.hero .value{font-size:clamp(1.05rem,2.1vw,1.22rem); color:var(--text); max-width:60ch; margin-top:20px; line-height:1.55}
-.chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:26px}
-.hero-line{
-  display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:38px;
-  border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; background:var(--surface);
-}
-.hero-line div{padding:16px 18px; border-left:1px solid var(--line-soft)}
-.hero-line div:first-child{border-left:0}
-.hero-line b{display:block; color:var(--ink); font-size:.86rem; font-weight:620}
-.hero-line span{font-size:.76rem; color:var(--faint)}
-@media(max-width:700px){ .hero-line{grid-template-columns:repeat(2,1fr)} .hero-line div:nth-child(3){border-left:0} .hero-line div:nth-child(n+3){border-top:1px solid var(--line-soft)} }
-
-/* ---- statement ---- */
-.statement{
-  border-left:2px solid var(--accent); padding:4px 0 4px 22px; margin:0;
-  font-size:clamp(1.08rem,2.2vw,1.32rem); color:var(--ink); font-weight:560;
-  letter-spacing:-0.018em; line-height:1.45; max-width:58ch;
-}
-.statement small{display:block; font-family:var(--mono); font-size:.72rem; font-weight:400; color:var(--muted); letter-spacing:.02em; margin-top:12px; text-transform:none}
-
-/* ---- flow / diagram primitives ---- */
-.stack{display:flex; flex-direction:column; gap:8px}
-.node{
-  background:var(--surface); border:1px solid var(--line); border-radius:11px;
-  padding:13px 16px; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
-}
-.node b{color:var(--ink); font-size:.875rem; font-weight:610; letter-spacing:-0.01em}
-.node span{font-size:.8rem; color:var(--muted)}
-.node.accent{background:var(--accent-soft); border-color:var(--accent-line)}
-.node.gate{background:var(--amber-soft); border-color:var(--amber-line)}
-.node.ghost{background:transparent; border-style:dashed}
-.arrow{
-  height:16px; margin-left:22px; border-left:1.5px solid var(--line);
-  position:relative;
-}
-.arrow::after{
-  content:""; position:absolute; left:-4px; bottom:-1px; width:7px; height:7px;
-  border-right:1.5px solid var(--line); border-bottom:1.5px solid var(--line);
-  transform:rotate(45deg);
-}
-.fanrow{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
-@media(max-width:700px){ .fanrow{grid-template-columns:repeat(2,1fr)} }
-.mini{
-  background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:11px 12px;
-  font-size:.79rem; color:var(--ink); font-weight:560; text-align:center;
-}
-.mini em{display:block; font-style:normal; font-size:.7rem; color:var(--faint); font-weight:400; margin-top:3px}
-
-/* ---- architecture layers ---- */
-.arch{display:flex; flex-direction:column; gap:10px}
-.layer{
-  border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); padding:16px 18px;
-}
-.layer .lbl{
-  font-family:var(--mono); font-size:.66rem; letter-spacing:.12em; text-transform:uppercase;
-  color:var(--faint); margin-bottom:11px;
-}
-.layer.jev{background:var(--accent-soft); border-color:var(--accent-line)}
-.layer.jev .lbl{color:var(--accent)}
-.jev-q{display:flex; flex-wrap:wrap; gap:7px}
-.jev-q span{
-  font-size:.775rem; color:var(--ink); background:var(--surface);
-  border:1px solid var(--accent-line); border-radius:100px; padding:4px 11px;
-}
-.agentgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
-@media(max-width:820px){ .agentgrid{grid-template-columns:repeat(2,1fr)} }
-.agent{
-  border:1px solid var(--line); border-radius:10px; padding:12px 13px; background:var(--bg);
-}
-.agent b{display:block; color:var(--ink); font-size:.82rem; font-weight:610}
-.agent span{display:block; font-size:.745rem; color:var(--muted); margin-top:4px; line-height:1.45}
-.agent.primary{background:var(--accent-soft); border-color:var(--accent-line)}
-.railrow{display:flex; flex-wrap:wrap; gap:7px}
-.rail{
-  font-family:var(--mono); font-size:.73rem; color:var(--muted);
-  border:1px solid var(--line); border-radius:8px; padding:6px 10px; background:var(--bg);
-}
-.sidebars{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-@media(max-width:700px){ .sidebars{grid-template-columns:1fr} }
-
-/* ---- walkthrough ---- */
-.steps{border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); overflow:hidden}
-.step{display:grid; grid-template-columns:100px 1fr; border-top:1px solid var(--line-soft)}
-.step:first-child{border-top:0}
-.step .who{
-  padding:15px 14px; font-family:var(--mono); font-size:.68rem; letter-spacing:.06em;
-  color:var(--faint); text-transform:uppercase; border-right:1px solid var(--line-soft); background:var(--slate-soft);
-}
-.step .what{padding:14px 18px}
-.step .what b{color:var(--ink); font-size:.865rem; font-weight:600}
-.step .what p{font-size:.815rem; color:var(--muted); margin-top:4px}
-.step.gate .what{background:var(--amber-soft)}
-.step.gate .who{background:var(--amber-soft); color:var(--amber)}
-@media(max-width:560px){ .step{grid-template-columns:1fr} .step .who{border-right:0; border-bottom:1px solid var(--line-soft)} }
-
-/* ---- loop ---- */
-.loop{display:grid; grid-template-columns:repeat(7,1fr); gap:8px}
-@media(max-width:900px){ .loop{grid-template-columns:repeat(4,1fr)} }
-@media(max-width:560px){ .loop{grid-template-columns:repeat(2,1fr)} }
-.loop .mini{text-align:left}
-.loop .mini i{font-style:normal; display:block; font-family:var(--mono); font-size:.66rem; color:var(--faint); margin-bottom:5px}
-
-/* ---- tables ---- */
-.tbl{width:100%; border-collapse:collapse; font-size:.845rem}
-.tbl-wrap{border:1px solid var(--line); border-radius:var(--radius); overflow-x:auto; background:var(--surface)}
-.tbl th{
-  text-align:left; font-family:var(--mono); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase;
-  color:var(--faint); font-weight:500; padding:12px 16px; border-bottom:1px solid var(--line); background:var(--slate-soft);
-  white-space:nowrap;
-}
-.tbl td{padding:12px 16px; border-bottom:1px solid var(--line-soft); color:var(--muted); vertical-align:top}
-.tbl tr:last-child td{border-bottom:0}
-.tbl td:first-child{color:var(--ink); font-weight:550; white-space:nowrap}
-.tbl td.wrap-ok:first-child{white-space:normal}
-@media(max-width:620px){ .tbl td:first-child{white-space:normal} .tbl th,.tbl td{padding:11px 13px} }
-
-/* ---- arabic examples ---- */
-.ar-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
-@media(max-width:820px){ .ar-grid{grid-template-columns:1fr} }
-.ar-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px}
-.ar-card .gloss{font-size:.79rem; color:var(--muted); margin-top:10px; padding-top:10px; border-top:1px solid var(--line-soft)}
-.ar-card .route{font-family:var(--mono); font-size:.7rem; color:var(--accent); margin-top:8px}
-
-/* ---- scope / closing ---- */
-.scope{display:grid; grid-template-columns:1fr 1fr; gap:14px}
-@media(max-width:700px){ .scope{grid-template-columns:1fr} }
-.scope .card.now{border-color:var(--accent-line); background:var(--accent-soft)}
-.scope ul{margin:10px 0 0; padding-left:18px}
-.scope li{font-size:.84rem; color:var(--muted); margin-top:5px}
-.closing{padding:76px 0 90px}
-.closing p{font-size:clamp(1.15rem,2.5vw,1.5rem); color:var(--ink); font-weight:560; letter-spacing:-0.022em; line-height:1.4; max-width:56ch}
-footer{border-top:1px solid var(--line-soft); padding:26px 0 44px}
-footer .row{display:flex; flex-wrap:wrap; gap:14px; justify-content:space-between; font-size:.76rem; color:var(--faint)}
-.note{font-size:.78rem; color:var(--faint); margin-top:14px}
-</style>
+<link rel="preload" href="./assets/zain-bold.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="./presentation.css">
+<link rel="icon" href="./assets/edfaa-zain-mark.webp" type="image/webp">
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
 
-<nav class="nav">
+<nav class="nav" aria-label="Hackathon page">
   <div class="nav-in">
-    <a class="brand" href="../" aria-label="Radiant home"><span class="dot"></span> Radiant</a>
-    <ul>
+    <div class="masthead">
+      <a class="brand" href="#overview" aria-label="منصة ادفع زين — overview">
+        <span class="brand-mark"><img src="./assets/edfaa-zain-mark.webp" width="1448" height="1086" alt=""></span>
+        <span class="brand-name" lang="ar" dir="rtl">منصة ادفع <span class="zain">زين</span></span>
+      </a>
+      <span class="topic-label">TOPIC 04 / BILL PAY &amp; TRANSFER</span>
+    </div>
+    <ul class="section-nav">
       <li><a href="#problem">Problem</a></li>
       <li><a href="#solution">Solution</a></li>
       <li><a href="#usecase">Use Case</a></li>
@@ -263,17 +35,24 @@ footer .row{display:flex; flex-wrap:wrap; gap:14px; justify-content:space-betwee
   </div>
 </nav>
 
-<main>
+<main id="main">
 
 <!-- 1 · HERO -->
-<section class="hero">
+<section class="hero" id="overview">
   <div class="wrap">
-    <div class="kicker">Agentic AI Iraq Hackathon · Primary challenge: Bill Pay &amp; Transfer Agent</div>
-    <h1>Radiant<br><span>An autonomous financial operating system.</span></h1>
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <div class="kicker">Agentic AI Iraq Hackathon / 2026</div>
+        <h1>Bill Pay &amp;<br>Transfer Agent</h1>
     <p class="value">
       A user states a financial goal in everyday Iraqi Arabic. One orchestrator plans it, specialist agents
       carry it out, and a verification layer confirms the action matches the request — before any money moves.
     </p>
+      </div>
+      <figure class="hero-art" aria-hidden="true">
+        <img src="./assets/robotic-dollar.webp" width="1254" height="1254" alt="" fetchpriority="high">
+      </figure>
+    </div>
     <div class="chips">
       <span class="tag primary">Primary build · Bill Pay &amp; Transfer</span>
       <span class="tag">Iraqi Arabic native</span>
@@ -389,7 +168,7 @@ footer .row{display:flex; flex-wrap:wrap; gap:14px; justify-content:space-betwee
 
       <div class="layer jev">
         <div class="lbl">JEV mode · fast decision &amp; routing layer</div>
-        <p style="font-size:.85rem; color:var(--text); margin-bottom:12px; max-width:70ch">
+        <p style="font-size:.9375rem; color:var(--text); margin-bottom:12px; max-width:70ch">
           A lightweight pass that decides how much machinery a request actually needs, so trivial requests never
           pay for a full reasoning pipeline. It answers, cheaply:
         </p>
@@ -408,7 +187,7 @@ footer .row{display:flex; flex-wrap:wrap; gap:14px; justify-content:space-betwee
 
       <div class="layer">
         <div class="lbl">Supervisor / orchestrator agent</div>
-        <p style="font-size:.85rem; color:var(--text); max-width:70ch">
+        <p style="font-size:.9375rem; color:var(--text); max-width:70ch">
           Builds the plan, selects agents dynamically, sequences their calls, resolves conflicting outputs,
           holds the confirmation gate, and owns recovery when a step fails.
         </p>
@@ -447,11 +226,11 @@ footer .row{display:flex; flex-wrap:wrap; gap:14px; justify-content:space-betwee
       <div class="sidebars">
         <div class="layer">
           <div class="lbl">Shared memory &amp; context</div>
-          <p style="font-size:.83rem; color:var(--muted)">User profile, recipients, prior transactions, open cases and session state — one source of truth every agent reads and writes.</p>
+          <p style="font-size:.9375rem; color:var(--muted)">User profile, recipients, prior transactions, open cases and session state — one source of truth every agent reads and writes.</p>
         </div>
         <div class="layer">
           <div class="lbl">Safety &amp; permission control</div>
-          <p style="font-size:.83rem; color:var(--muted)">Risk thresholds, confirmation gates, blocked-action rules, escalation routes, and a full decision trace per request.</p>
+          <p style="font-size:.9375rem; color:var(--muted)">Risk thresholds, confirmation gates, blocked-action rules, escalation routes, and a full decision trace per request.</p>
         </div>
       </div>
 
@@ -467,8 +246,8 @@ footer .row{display:flex; flex-wrap:wrap; gap:14px; justify-content:space-betwee
     <h2>A high-value transfer, in full.</h2>
     <div class="card" style="margin-top:24px; display:flex; align-items:baseline; gap:16px; flex-wrap:wrap">
       <span class="tag">User</span>
-      <p class="ar" style="font-size:1.12rem">حوّل مليون دينار لهذا الحساب.</p>
-      <p style="font-size:.82rem; color:var(--faint)">“Transfer one million dinars to this account.”</p>
+      <p class="ar">حوّل مليون دينار لهذا الحساب.</p>
+      <p style="font-size:.9375rem; color:var(--faint)">“Transfer one million dinars to this account.”</p>
     </div>
 
     <div class="steps" style="margin-top:14px">
@@ -699,25 +478,42 @@ footer .row{display:flex; flex-wrap:wrap; gap:14px; justify-content:space-betwee
 
 <footer>
   <div class="wrap row">
-    <span>Radiant · Agentic AI Iraq Hackathon</span>
+    <span class="footer-name" lang="ar" dir="rtl">منصة ادفع زين</span>
     <span>Primary challenge: Bill Pay &amp; Transfer Agent · Synthetic data only · Metrics are targets to measure</span>
   </div>
 </footer>
 
 <script>
-(function(){
-  var links = Array.prototype.slice.call(document.querySelectorAll('.nav a'));
-  var map = {};
-  links.forEach(function(a){ var el = document.querySelector(a.getAttribute('href')); if(el) map[el.id] = a; });
-  var obs = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){
-      if(e.isIntersecting){
-        links.forEach(function(a){ a.classList.remove('on'); });
-        if(map[e.target.id]) map[e.target.id].classList.add('on');
-      }
+(function () {
+  var links = Array.from(document.querySelectorAll('.section-nav a[href^="#"]'));
+  var sections = links.map(function (link) {
+    return { link: link, section: document.getElementById(link.hash.slice(1)) };
+  }).filter(function (item) { return item.section; });
+
+  function markActive(active) {
+    links.forEach(function (link) {
+      var current = link === active;
+      link.classList.toggle('on', current);
+      if (current) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
     });
-  }, { rootMargin:'-45% 0px -50% 0px' });
-  Object.keys(map).forEach(function(id){ obs.observe(document.getElementById(id)); });
+  }
+  var pending = false;
+  function updateActive() {
+    var active = null;
+    var threshold = document.querySelector('.nav').getBoundingClientRect().height + 100;
+    sections.forEach(function (item) {
+      if (item.section.getBoundingClientRect().top <= threshold) active = item.link;
+    });
+    markActive(active);
+    pending = false;
+  }
+  window.addEventListener('scroll', function () {
+    if (!pending) { pending = true; window.requestAnimationFrame(updateActive); }
+  }, { passive: true });
+  window.addEventListener('resize', updateActive);
+  window.addEventListener('hashchange', updateActive);
+  updateActive();
 })();
 </script>
 </body>
