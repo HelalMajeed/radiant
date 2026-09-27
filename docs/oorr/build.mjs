@@ -14,10 +14,11 @@
  * refresh of /docs/oorr/usage. Separate files work on any static host with zero
  * configuration, and back/forward comes free from the browser.
  *
- * The shell is the terminal chrome: slash-prefixed nav, the numbered index
- * rail, a dotted routing connector, the status-legend diagnostics block, the
- * status ticker and the wireframe globe. Presentation lives in docs.css;
- * behaviour — including the globe — in docs.js.
+ * The shell is the terminal chrome, laid out as a horizontal deck: the
+ * numbered index now runs as a rail under the top bar, the article flows into
+ * columns that read left to right, and the last column hands over to the next
+ * page. Presentation lives in docs.css; behaviour — the wheel-to-deck mapping,
+ * the page hand-over and the globe — in docs.js.
  *
  * Usage:  node docs/oorr/build.mjs
  *
@@ -131,22 +132,19 @@ function rewriteCrossLinks(html, page) {
 }
 
 /**
- * The routing connector that divides the index from the diagnostics block: a
- * dotted trace that leaves the rail, turns two corners and terminates on a
- * marked node, the way the reference routes a line between blocks. The trace
- * is broken either side of the node so the glyph sits on the wire rather than
- * on top of it.
+ * The hand-over connector drawn in the last column: a dotted trace running
+ * down to a diamond carrying the next page's number — the join the reference
+ * draws between one numbered section and the next.
  */
-function routeSvg() {
-  return `    <div class="route" aria-hidden="true">
-      <svg viewBox="0 0 200 64" preserveAspectRatio="none" role="presentation">
-        <path d="M10 0 V16 H104 V22"/>
-        <path d="M104 40 V48 H190 V64"/>
-        <circle class="node" cx="104" cy="31" r="9"/>
-        <path class="bolt" d="M104 26.5 V35.5 M99.5 31 H108.5 M100.8 27.8 L107.2 34.2 M107.2 27.8 L100.8 34.2"/>
-        <circle class="pip" cx="190" cy="56" r="1.7"/>
-      </svg>
-    </div>`;
+function handover(nextIndex) {
+  return `        <div class="endcap-link" aria-hidden="true">
+          <svg viewBox="0 0 200 74" role="presentation">
+            <path d="M8 0 V26 H92 V30"/>
+            <path d="M92 52 V58 H192 V74"/>
+            <path class="dia" d="M92 33 L109 46 L92 59 L75 46 Z"/>
+            <text x="92" y="49" text-anchor="middle">${pad(nextIndex + 1)}</text>
+          </svg>
+        </div>`;
 }
 
 /**
@@ -162,46 +160,33 @@ function legend() {
     ui: '<i class="g-wire"></i><i class="g-wire g-wire--2"></i>',
   };
 
-  const rows = LEGEND.map((s) => `        <li>
-          <button class="lg lg--${s.key}" type="button" data-status="${s.key}" aria-pressed="false">
-            <span class="lg-glyph" aria-hidden="true">${glyphs[s.key]}</span>
-            <span class="lg-text"><b>${s.label}</b><em>${s.note}</em></span>
-            <span class="lg-track" aria-hidden="true"><i></i></span>
-          </button>
-        </li>`).join("\n");
+  const rows = LEGEND.map((s) => `      <button class="lg lg--${s.key}" type="button" data-status="${s.key}" ` +
+    `aria-pressed="false" title="${s.label} — ${s.note}">
+        <span class="lg-glyph" aria-hidden="true">${glyphs[s.key]}</span>
+        <span class="lg-text"><b>${s.label}</b></span>
+      </button>`).join("\n");
 
-  return `    <section class="legend" aria-labelledby="legend-title">
-      <div class="legend-frame" aria-hidden="true"></div>
-      <header class="legend-head">
-        <span class="legend-title" id="legend-title">Status legend</span>
-        <span class="legend-led" aria-hidden="true"></span>
-      </header>
-      <ul class="legend-list">
+  return `    <div class="legend" role="group" aria-label="Status legend — point at one to trace it through the page">
 ${rows}
-      </ul>
-      <p class="legend-foot"><span class="kbd">hover</span> to trace on this page</p>
-    </section>`;
+    </div>`;
 }
 
-/** The shared sidebar, with the current page marked. */
-function sidebar(current) {
+/** The module rail: the index, moved out of the sidebar into the top bar. */
+function rail(current) {
   const up = upToDocsRoot(current);
   const items = PAGES.map((p, i) => {
     const href = p.dir === "" ? up || "./" : `${up}${p.dir}/`;
     const isCurrent = p.id === current.id;
-    return `        <li><a href="${href}"${isCurrent ? ' class="is-current" aria-current="page"' : ""}>` +
-      `<i class="sb-idx">${pad(i + 1)}</i>` +
-      `<span class="sb-label">${p.label}</span></a></li>`;
+    return `      <li><a class="rail-item${isCurrent ? " is-current" : ""}" href="${href}"` +
+      `${isCurrent ? ' aria-current="page"' : ""}>` +
+      `<i>${pad(i + 1)}</i>${p.label}</a></li>`;
   }).join("\n");
 
-  return `    <p class="sb-title"><span>Index</span><b>${pad(PAGES.length)}</b></p>
-    <ol class="sb-list">
+  return `  <nav class="rail" aria-label="Documentation">
+    <ol class="rail-list">
 ${items}
     </ol>
-
-${routeSvg()}
-
-${legend()}`;
+  </nav>`;
 }
 
 /**
@@ -217,30 +202,40 @@ function ticker() {
       </div>`;
 }
 
-/** Previous / next links, so the reading order survives the page split. */
-function pager(index) {
-  const prev = PAGES[index - 1];
-  const next = PAGES[index + 1];
-  if (!prev && !next) return "";
+/**
+ * The last column of every page. Scrolling past it is what carries the reader
+ * on, so it states where "on" goes and gives a link for anyone who would
+ * rather click than scroll.
+ */
+function endcap(index) {
   const current = PAGES[index];
+  const next = PAGES[index + 1];
   const up = upToDocsRoot(current);
-  const href = (p) => (p.dir === "" ? up || "./" : `${up}${p.dir}/`);
-
-  const arrowL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l-6 6 6 6"/></svg>';
-  const arrowR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6l6 6-6 6"/></svg>';
-
-  const left = prev
-    ? `<a class="pager-link pager-prev" href="${href(prev)}"><span>${arrowL}Previous</span><b>${prev.label}</b></a>`
-    : `<span></span>`;
-  const right = next
-    ? `<a class="pager-link pager-next" href="${href(next)}"><span>Next${arrowR}</span><b>${next.label}</b></a>`
-    : `<span></span>`;
-  return `\n      <nav class="pager" aria-label="Documentation pages">\n        ${left}\n        ${right}\n      </nav>\n`;
+  if (!next) {
+    return `      <div class="endcap">
+        <p class="end-kicker">End of reference</p>
+        <h2 class="end-title">${PAGES[0].label}</h2>
+        <p class="end-hint">back to the start <i aria-hidden="true">&rsaquo;</i></p>
+        <a class="bracket" href="${up || "./"}">.open&nbsp;<em>{${PAGES[0].label.toUpperCase()}}</em></a>
+      </div>`;
+  }
+  const href = next.dir === "" ? up || "./" : `${up}${next.dir}/`;
+  return `      <div class="endcap">
+${handover(index + 1)}
+        <p class="end-kicker">Next &mdash; ${pad(index + 2)}</p>
+        <h2 class="end-title">${next.label}</h2>
+        <p class="end-hint">keep scrolling <i aria-hidden="true">&rsaquo;</i></p>
+        <a class="bracket" href="${href}">.open&nbsp;<em>{${next.label.toUpperCase()}}</em></a>
+      </div>`;
 }
 
 function render(page, index, lede) {
   const site = upToSiteRoot(page);
   const docs = upToDocsRoot(page);
+  // The deck hands over to these when the reader scrolls past either end.
+  const href = (p) => (p.dir === "" ? docs || "./" : `${docs}${p.dir}/`);
+  const prevHref = PAGES[index - 1] ? href(PAGES[index - 1]) : "";
+  const nextHref = PAGES[index + 1] ? href(PAGES[index + 1]) : "";
   const section = extractSection(SOURCE, page.id);
   const { heading, body } = splitHeading(section);
   const content = rewriteCrossLinks(body, page);
@@ -261,63 +256,66 @@ function render(page, index, lede) {
 <link rel="icon" type="image/png" href="${site}assets/favicon.png">
 <link rel="stylesheet" href="${docs}docs.css">
 </head>
-<body data-page="${page.id}">
+<body data-page="${page.id}"${prevHref ? ` data-prev="${prevHref}"` : ""}${nextHref ? ` data-next="${nextHref}"` : ""}>
 
 <a class="skip" href="#main">Skip to content</a>
 
-<header class="topbar">
-  <nav class="navset" aria-label="Site">
-    <a class="navlink" href="${site}">Radiant</a>
-    <a class="navlink is-here" href="${docs || "./"}">Docs</a>
-    <a class="navlink" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
-  </nav>
-  <a class="brand" href="${site}">
-    <img src="${site}assets/radiant-mark.png" alt="" draggable="false">
-    <b>radiant<i>/oorr</i></b>
-  </a>
-  <div class="topbar-end">
-    <a class="bracket" href="https://api.oorr.ai" target="_blank" rel="noopener">.open&nbsp;<em>{API}</em></a>
-    <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      .index
-    </button>
-  </div>
-  <div class="readbar" id="readbar" aria-hidden="true"><i></i></div>
-</header>
+<div class="shell">
 
-<div class="layout">
-
-  <nav class="sidebar" id="sidebar" aria-label="Documentation">
-${sidebar(page)}
-  </nav>
-
-  <main class="content" id="main">
-
-    <div class="page-head">
-      <p class="ph-num"><b>${pad(index + 1)}</b><i>&nbsp;/&nbsp;${pad(PAGES.length)}</i></p>
-      <h1>${headingHtml}</h1>${ledeHtml}
-      <canvas class="globe" id="globe" aria-hidden="true"></canvas>
+  <header class="topbar">
+    <nav class="navset" aria-label="Site">
+      <a class="navlink" href="${site}">Radiant</a>
+      <a class="navlink is-here" href="${docs || "./"}">Docs</a>
+      <a class="navlink" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    </nav>
+    <a class="brand" href="${site}">
+      <img src="${site}assets/radiant-mark.png" alt="" draggable="false">
+      <b>radiant<i>/oorr</i></b>
+    </a>
+    <div class="topbar-end">
+      <a class="bracket" href="https://api.oorr.ai" target="_blank" rel="noopener">.open&nbsp;<em>{API}</em></a>
     </div>
+    <div class="readbar" id="readbar" aria-hidden="true"><i></i></div>
+  </header>
+
+${rail(page)}
 
 ${ticker()}
 
-    <article class="prose">
+  <main class="deck" id="deck" tabindex="-1">
+    <div class="track" id="track">
+      <article class="reader prose" id="main">
+
+        <div class="cover">
+          <p class="ph-num"><b>${pad(index + 1)}</b><i>&nbsp;/&nbsp;${pad(PAGES.length)}</i></p>
+          <h1>${headingHtml}</h1>${ledeHtml}
+          <p class="cover-hint">scroll to read <i aria-hidden="true">&rsaquo;</i></p>
+        </div>
+
+        <div class="cover-figure" aria-hidden="true">
+          <canvas class="globe" id="globe"></canvas>
+        </div>
+
 ${content}
-${pager(index)}    </article>
 
-    <aside class="toc" id="toc" aria-label="On this page"></aside>
+${endcap(index)}
+      </article>
+    </div>
   </main>
-</div>
 
-<footer class="docfoot">
-  <span>OORR AI API</span>
-  <span class="dot" aria-hidden="true"></span>
-  <a href="${site}">Radiant</a>
-  <span class="dot" aria-hidden="true"></span>
-  <a href="https://radiant-iraq.com" target="_blank" rel="noopener">radiant-iraq.com</a>
-  <span class="dot" aria-hidden="true"></span>
-  <a href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
-</footer>
+  <div class="footbar">
+${legend()}
+    <div class="chips" id="chips" aria-label="Sections on this page"></div>
+    <div class="colcount">
+      <span id="colcount"><b>01</b> / 01</span>
+      <span class="stepper">
+        <button class="step" type="button" id="stepprev" aria-label="Previous column">&lsaquo;</button>
+        <button class="step" type="button" id="stepnext" aria-label="Next column">&rsaquo;</button>
+      </span>
+    </div>
+  </div>
+
+</div>
 
 <script src="${docs}docs.js"></script>
 </body>

@@ -196,66 +196,184 @@
     attachCopy(wrap);
   });
 
-  /* ----------------------------------------------------------- mobile drawer */
+  /* ============================================================== the deck ===
+     The article reads sideways. Everything below drives that one axis: the
+     wheel, the keyboard, the stepper, the heading chips — and, once the reader
+     pushes past either end, the hand-over to the neighbouring page.
 
-  var toggle = $('#navtoggle');
-  var sidebar = $('#sidebar');
-  var COMPACT = '(max-width: 820px)';
+     Below the phone breakpoint the deck is an ordinary vertical page and all
+     of this stands down. */
 
-  function isCompact() { return window.matchMedia(COMPACT).matches; }
+  var VERTICAL_MQ = '(max-width: 820px)';
+  function isVertical() { return window.matchMedia(VERTICAL_MQ).matches; }
 
-  if (toggle && sidebar) {
-    var scrim = document.createElement('div');
-    scrim.className = 'scrim';
-    document.body.appendChild(scrim);
+  var deck = $('#deck');
+  var track = $('#track');
+  var reader = $('.reader');
+  var NEXT = document.body.getAttribute('data-next') || '';
+  var PREV = document.body.getAttribute('data-prev') || '';
 
-    var setNav = function (open) {
-      sidebar.classList.toggle('is-open', open);
-      scrim.classList.toggle('is-open', open);
-      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      // Stop the page behind the drawer from scrolling under the finger.
-      document.body.style.overflow = open ? 'hidden' : '';
-    };
+  /* ---------------------------------------------------------- column metrics
+     Multicol stretches its columns to fill the box, so the used width is not
+     the declared `column-width`; it has to be derived the same way the layout
+     engine derives it, or every measurement downstream drifts. */
 
-    // Leaving the compact breakpoint must not strand the page in the drawer's
-    // state: the sidebar is permanent on desktop, so everything is reset.
-    var syncNav = function () {
-      if (!isCompact()) setNav(false);
-    };
+  function metrics() {
+    if (!reader || !deck) return { pitch: 1, pad: 0, total: 1 };
+    var cs = getComputedStyle(reader);
+    var pad = parseFloat(cs.paddingLeft) || 0;
 
-    toggle.addEventListener('click', function () {
-      setNav(!sidebar.classList.contains('is-open'));
-    });
+    // Read the pitch off the layout rather than deriving it: multicol stretches
+    // its columns to fill the box, so the declared column-width is only a
+    // preference and any arithmetic from it drifts. Children that share a
+    // column share a left edge, so the gaps between distinct left edges give
+    // the real pitch.
+    var lefts = [];
+    var seen = Object.create(null);
+    var kids = reader.children;
+    for (var i = 0; i < kids.length; i++) {
+      var r = kids[i].getBoundingClientRect();
+      if (!r.width && !r.height) continue;
+      var L = Math.round(r.left + deck.scrollLeft);
+      if (!seen[L]) { seen[L] = 1; lefts.push(L); }
+    }
+    lefts.sort(function (x, y) { return x - y; });
 
-    scrim.addEventListener('click', function () { setNav(false); });
+    var pitch = 0;
+    for (var j = 1; j < lefts.length; j++) {
+      var gap = lefts[j] - lefts[j - 1];
+      if (gap > 40) { pitch = gap; break; }      // 40px filters out sub-pixel drift
+    }
+    if (!pitch) pitch = Math.max(1, deck.clientWidth);
 
-    // A link navigates to a real page, so the drawer closing is incidental —
-    // but it matters for the current page's own link.
-    sidebar.addEventListener('click', function (e) {
-      if (e.target.closest('a') && isCompact()) setNav(false);
-    });
-
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && sidebar.classList.contains('is-open')) {
-        setNav(false);
-        toggle.focus();
-      }
-    });
-
-    var mq = window.matchMedia(COMPACT);
-    (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(syncNav);
-    syncNav();
+    var span = lefts.length ? lefts[lefts.length - 1] - lefts[0] : 0;
+    var total = Math.max(1, Math.round(span / pitch) + 1);
+    return { pitch: pitch, pad: pad, total: total };
   }
 
-  /* ------------------------------------------------------------ on this page
-     Each sidebar entry is now its own page, so the sidebar's current item is
-     rendered server-side. What remains useful is a rail for the headings
-     WITHIN a page, built here from the article's own h3s. */
+  /* ------------------------------------------------------------- hand-over */
 
-  var toc = $('#toc');
-  var headings = $$('.prose h3').filter(function (h) { return h.textContent.trim() !== ''; });
+  var leaving = false;
 
-  // A heading may carry a status pill; the rail wants the words, not the badge.
+  function leave(href, direction) {
+    if (leaving || !href) return;
+    leaving = true;
+    // The next page reads this to know which way it was entered.
+    try { sessionStorage.setItem('oorr-nav', direction); } catch (e) { /* private mode */ }
+    if (track && MOTION_OK) {
+      track.classList.add(direction === 'back' ? 'is-leaving-back' : 'is-leaving-fwd');
+      setTimeout(function () { window.location.href = href; }, 300);
+    } else {
+      window.location.href = href;
+    }
+  }
+
+  // Arriving: come in from the side the reader was travelling, and when coming
+  // backwards, land at the far end so the reading order stays continuous.
+  var arrivedFrom = null;
+  try {
+    arrivedFrom = sessionStorage.getItem('oorr-nav');
+    sessionStorage.removeItem('oorr-nav');
+  } catch (e) { /* private mode */ }
+
+  if (deck && arrivedFrom === 'back' && !isVertical()) {
+    // Multicol settles over a few frames, so the end of the track moves for a
+    // moment after load. Hold the reader against it until the layout is final
+    // — or until they take over, whichever comes first.
+    var pinning = true;
+    var release = function () { pinning = false; };
+    deck.addEventListener('wheel', release, { once: true, passive: true });
+    deck.addEventListener('pointerdown', release, { once: true, passive: true });
+    document.addEventListener('keydown', release, { once: true });
+    var since = Date.now();
+    (function settle() {
+      if (!pinning) return;
+      deck.scrollLeft = deck.scrollWidth;
+      if (Date.now() - since < 700) requestAnimationFrame(settle);
+    })();
+  }
+  if (track && MOTION_OK && arrivedFrom) {
+    track.classList.add(arrivedFrom === 'back' ? 'is-entering-back' : 'is-entering-fwd');
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        track.classList.remove('is-entering-back', 'is-entering-fwd');
+      });
+    });
+  }
+
+  /* ----------------------------------------------------------- wheel to deck */
+
+  if (deck) {
+    var overscroll = 0;
+    var decay;
+    var HANDOVER = 220;      // how much push past the end asks for the next page
+
+    deck.addEventListener('wheel', function (e) {
+      if (isVertical() || leaving) return;
+
+      // Trackpads send deltaX; wheels send deltaY. Take whichever is stronger.
+      var delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+      if (e.deltaMode === 1) delta *= 16;        // reported in lines
+      else if (e.deltaMode === 2) delta *= deck.clientWidth;
+      if (!delta) return;
+
+      var max = deck.scrollWidth - deck.clientWidth;
+      var atStart = deck.scrollLeft <= 1;
+      var atEnd = deck.scrollLeft >= max - 1;
+
+      e.preventDefault();
+
+      if ((delta > 0 && !atEnd) || (delta < 0 && !atStart)) {
+        deck.scrollLeft += delta;
+        overscroll = 0;
+        return;
+      }
+
+      // Sitting against an edge: it takes a deliberate push to turn the page.
+      overscroll += delta;
+      clearTimeout(decay);
+      decay = setTimeout(function () { overscroll = 0; }, 340);
+
+      if (overscroll > HANDOVER && NEXT) { overscroll = 0; leave(NEXT, 'fwd'); }
+      else if (overscroll < -HANDOVER && PREV) { overscroll = 0; leave(PREV, 'back'); }
+    }, { passive: false });
+  }
+
+  /* ------------------------------------------------------------- keyboard */
+
+  function step(dirSign) {
+    if (!deck) return;
+    var m = metrics();
+    deck.scrollBy({ left: dirSign * m.pitch, behavior: MOTION_OK ? 'smooth' : 'auto' });
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (isVertical() || leaving) return;
+    var t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); step(1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); step(-1); }
+    else if (e.key === 'Home') { e.preventDefault(); deck.scrollTo({ left: 0, behavior: 'smooth' }); }
+    else if (e.key === 'End') { e.preventDefault(); deck.scrollTo({ left: deck.scrollWidth, behavior: 'smooth' }); }
+  });
+
+  var stepPrev = $('#stepprev');
+  var stepNext = $('#stepnext');
+  if (stepPrev) stepPrev.addEventListener('click', function () { step(-1); });
+  if (stepNext) stepNext.addEventListener('click', function () { step(1); });
+
+  /* ------------------------------------------------- heading chips + position
+     The sidebar's contents rail, rewritten for a horizontal reader: each
+     heading is a stop the deck can jump to. */
+
+  var chips = $('#chips');
+  var colcount = $('#colcount');
+  var readbarFill = $('#readbar i');
+  var headings = $$('.reader h3').filter(function (h) { return h.textContent.trim() !== ''; });
+
+  // A heading may carry a status pill; the chip wants the words, not the badge.
   function headingLabel(h) {
     var clone = h.cloneNode(true);
     $$('.pill', clone).forEach(function (pill) { pill.remove(); });
@@ -263,107 +381,96 @@
   }
 
   function slugify(text, index) {
-    var base = text
-      .toLowerCase()
-      .replace(/[^a-z0-9؀-ۿ]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+    var base = text.toLowerCase().replace(/[^a-z0-9؀-ۿ]+/g, '-').replace(/^-+|-+$/g, '');
     return base || 'section-' + index;
   }
 
-  // Two entries is the point at which a contents rail earns its space.
-  if (toc && headings.length >= 2) {
+  var chipEls = [];
+  if (chips && headings.length >= 2) {
     var seen = Object.create(null);
-    var list = document.createElement('ul');
+    var title = document.createElement('span');
+    title.className = 'chips-title';
+    title.textContent = 'On this page';
+    chips.appendChild(title);
 
     headings.forEach(function (h, i) {
       if (!h.id) {
         var slug = slugify(headingLabel(h), i);
-        while (seen[slug]) slug += '-' + i;   // ids must stay unique
+        while (seen[slug]) slug += '-' + i;
         seen[slug] = true;
         h.id = slug;
       }
-      var li = document.createElement('li');
-      var a = document.createElement('a');
-      a.href = '#' + h.id;
-      a.textContent = headingLabel(h);
-      li.appendChild(a);
-      list.appendChild(li);
-    });
-
-    var title = document.createElement('p');
-    title.className = 'toc-title';
-    title.textContent = 'On this page';
-    toc.appendChild(title);
-    toc.appendChild(list);
-
-    // The light that rides the rail alongside the active entry.
-    var dot = document.createElement('i');
-    dot.className = 'toc-dot';
-    dot.setAttribute('aria-hidden', 'true');
-    toc.appendChild(dot);
-    toc.classList.add('is-active');
-
-    var links = $$('a', toc);
-    var readingLine = function () { return Math.max(110, window.innerHeight * 0.3); };
-
-    var mark = function () {
-      var current = headings[0];
-      var line = readingLine();
-      for (var i = 0; i < headings.length; i++) {
-        if (headings[i].getBoundingClientRect().top <= line) current = headings[i];
-      }
-      var atBottom = window.innerHeight + window.scrollY >=
-        document.documentElement.scrollHeight - 2;
-      if (atBottom) current = headings[headings.length - 1];
-
-      links.forEach(function (a) {
-        var on = a.getAttribute('href') === '#' + current.id;
-        a.classList.toggle('is-current', on);
-        if (on) toc.style.setProperty('--y', (a.offsetTop + a.offsetHeight / 2) + 'px');
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.textContent = headingLabel(h);
+      b.addEventListener('click', function () {
+        if (isVertical()) {
+          h.scrollIntoView({ behavior: MOTION_OK ? 'smooth' : 'auto', block: 'start' });
+          return;
+        }
+        // Land the heading's column against the left edge of the deck.
+        var m = metrics();
+        var offset = h.getBoundingClientRect().left - deck.getBoundingClientRect().left - m.pad;
+        var target = Math.round((deck.scrollLeft + offset) / m.pitch) * m.pitch;
+        deck.scrollTo({ left: target, behavior: MOTION_OK ? 'smooth' : 'auto' });
       });
-    };
-
-    var queued = false;
-    var onScroll = function () {
-      if (queued) return;
-      queued = true;
-      requestAnimationFrame(function () { queued = false; mark(); });
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    links.forEach(function (a) {
-      a.addEventListener('click', function () { setTimeout(mark, 700); });
+      chips.appendChild(b);
+      chipEls.push({ el: b, h: h });
     });
-    mark();
   }
 
-  /* --------------------------------------------------------------- reading bar
-     Progress through the article, drawn on the underside of the top bar. */
+  function syncPosition() {
+    if (!deck) return;
+    var m = metrics();
+    var max = Math.max(1, deck.scrollWidth - deck.clientWidth);
+    // Name the last column in view: the readout then tracks what has been read
+    // rather than what is left-aligned, and lands on the total at the end.
+    var current = Math.max(1, Math.min(m.total,
+      Math.round((deck.scrollLeft + deck.clientWidth - m.pad) / m.pitch)));
 
-  var readbar = $('#readbar i');
-  if (readbar) {
-    var ticking = false;
-    var drawBar = function () {
-      var doc = document.documentElement;
-      var span = doc.scrollHeight - window.innerHeight;
-      var pct = span > 0 ? (window.scrollY / span) * 100 : 0;
-      readbar.style.width = Math.max(0, Math.min(100, pct)) + '%';
-    };
-    window.addEventListener('scroll', function () {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(function () { ticking = false; drawBar(); });
-    }, { passive: true });
-    window.addEventListener('resize', drawBar);
-    drawBar();
+    if (readbarFill) {
+      var pct = isVertical()
+        ? (window.scrollY / Math.max(1, document.documentElement.scrollHeight - window.innerHeight)) * 100
+        : (deck.scrollLeft / max) * 100;
+      readbarFill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+    }
+
+    if (colcount) {
+      colcount.innerHTML = '<b>' + String(current).padStart(2, '0') + '</b> / ' +
+        String(m.total).padStart(2, '0');
+    }
+    if (stepPrev) stepPrev.disabled = deck.scrollLeft <= 1;
+    if (stepNext) stepNext.disabled = deck.scrollLeft >= max - 1;
+
+    // Mark the last heading whose column has been reached.
+    if (chipEls.length) {
+      var edge = deck.getBoundingClientRect().left + m.pitch * 0.6;
+      var activeIdx = 0;
+      for (var i = 0; i < chipEls.length; i++) {
+        if (chipEls[i].h.getBoundingClientRect().left <= edge) activeIdx = i;
+      }
+      chipEls.forEach(function (c, i) { c.el.classList.toggle('is-current', i === activeIdx); });
+    }
   }
+
+  var posQueued = false;
+  function onDeckScroll() {
+    if (posQueued) return;
+    posQueued = true;
+    requestAnimationFrame(function () { posQueued = false; syncPosition(); });
+  }
+  if (deck) deck.addEventListener('scroll', onDeckScroll, { passive: true });
+  window.addEventListener('scroll', onDeckScroll, { passive: true });
+  window.addEventListener('resize', onDeckScroll);
+  syncPosition();
+  // Multicol settles a frame or two after load; re-measure once it has.
+  setTimeout(syncPosition, 250);
 
   /* ------------------------------------------------------------ legend trace
      Pointing at a legend entry traces that status through the whole page:
-     matching pills light up, the rest recede. Clicking pins the trace, so it
-     survives the pointer leaving the sidebar; Escape or a second click clears
-     it. Keyboard focus does the same as hover. */
+     matching pills hold, the rest recede. Clicking pins the trace so it
+     survives the pointer leaving; Escape or a second click clears it. */
 
   var legendBtns = $$('.lg');
   if (legendBtns.length) {
@@ -384,14 +491,13 @@
 
     legendBtns.forEach(function (btn) {
       var status = btn.getAttribute('data-status');
-
       var enter = function () { if (!pinned) applyTrace(status); };
-      var leave = function () { applyTrace(pinned); };
+      var leaveTrace = function () { applyTrace(pinned); };
 
       btn.addEventListener('mouseenter', enter);
-      btn.addEventListener('mouseleave', leave);
+      btn.addEventListener('mouseleave', leaveTrace);
       btn.addEventListener('focus', enter);
-      btn.addEventListener('blur', leave);
+      btn.addEventListener('blur', leaveTrace);
       btn.addEventListener('click', function () {
         pin(btn, pinned === status ? null : status);
       });
@@ -414,47 +520,21 @@
     if (lead === '—' || lead === '-') stat.classList.add('is-idle');
   });
 
-  /* ------------------------------------------------------- pointer spotlight
-     Cards track the pointer with a soft light. One delegated listener, one
-     rAF per frame, and nothing at all when motion is reduced. */
-
-  if (MOTION_OK && window.matchMedia('(pointer: fine)').matches) {
-    var LIT = '.stat,.price,.panel,.pager-link,.keyrow';
-    var pending = null;
-    var lightQueued = false;
-    document.addEventListener('pointermove', function (e) {
-      var card = e.target.closest ? e.target.closest(LIT) : null;
-      if (!card) return;
-      pending = { card: card, x: e.clientX, y: e.clientY };
-      if (lightQueued) return;
-      lightQueued = true;
-      requestAnimationFrame(function () {
-        lightQueued = false;
-        if (!pending) return;
-        var r = pending.card.getBoundingClientRect();
-        pending.card.style.setProperty('--mx', (pending.x - r.left) + 'px');
-        pending.card.style.setProperty('--my', (pending.y - r.top) + 'px');
-        pending = null;
-      });
-    }, { passive: true });
-  }
-
   /* --------------------------------------------------------- reveal on scroll
-     Blocks arrive with a short focus pull, staggered within whatever batch
-     enters together. Code blocks and price cards also fire their one-shot
-     flourish here. `.rv` is only ever added from script, so with JS off — or
-     motion reduced — the article is simply already there. */
+     Blocks arrive as their column reaches the viewport — the same entrance as
+     before, now observed along the horizontal axis with the deck as the root.
+     `.rv` is only ever added from script, so with JS off — or motion reduced —
+     the article is simply already there. */
 
   var revealables = $$([
-    '.prose > h2', '.prose > h3', '.prose > h4', '.prose > p',
-    '.prose > ul', '.prose > ol', '.prose > .note', '.prose > .codewrap',
-    '.prose > .tablewrap', '.prose > .grid', '.prose > .panel',
-    '.prose > .keys', '.prose > .empty', '.prose > .pager'
+    '.reader > h2', '.reader > h3', '.reader > h4', '.reader > p',
+    '.reader > ul', '.reader > ol', '.reader > .note', '.reader > .codewrap',
+    '.reader > .tablewrap', '.reader > .grid', '.reader > .panel',
+    '.reader > .keys', '.reader > .empty', '.reader > .endcap'
   ].join(','));
 
   function flourish(el) {
     if (el.classList.contains('codewrap')) el.classList.add('is-lit');
-    if (el.classList.contains('price')) el.classList.add('is-lit');
     $$('.price', el).forEach(function (p) { p.classList.add('is-lit'); });
     $$('.codewrap', el).forEach(function (c) { c.classList.add('is-lit'); });
   }
@@ -462,16 +542,19 @@
   if (MOTION_OK && 'IntersectionObserver' in window && revealables.length) {
     var inView = function (el) {
       var r = el.getBoundingClientRect();
-      return r.top < window.innerHeight * 0.92 && r.bottom > 0;
+      var box = isVertical()
+        ? { near: 0, far: window.innerHeight * 0.92, a: r.top, b: r.bottom }
+        : (function () {
+            var d = deck.getBoundingClientRect();
+            return { near: d.left, far: d.right, a: r.left, b: r.right };
+          })();
+      return box.a < box.far && box.b > box.near;
     };
 
     revealables.forEach(function (el) { el.classList.add('rv'); });
 
-    // Everything already on screen animates in as one opening sequence.
     var opening = revealables.filter(inView);
-    opening.forEach(function (el, i) {
-      el.style.setProperty('--d', Math.min(i, 6));
-    });
+    opening.forEach(function (el, i) { el.style.setProperty('--d', Math.min(i, 6)); });
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
         opening.forEach(function (el) { el.classList.add('rv-in'); flourish(el); });
@@ -479,17 +562,21 @@
     });
 
     var io = new IntersectionObserver(function (entries) {
-      var step = 0;
+      var stepIdx = 0;
       entries.forEach(function (entry) {
         if (!entry.isIntersecting) return;
         var el = entry.target;
-        el.style.setProperty('--d', Math.min(step, 4));
-        step += 1;
+        el.style.setProperty('--d', Math.min(stepIdx, 4));
+        stepIdx += 1;
         el.classList.add('rv-in');
         flourish(el);
         io.unobserve(el);
       });
-    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.06 });
+    }, {
+      root: isVertical() ? null : deck,
+      rootMargin: isVertical() ? '0px 0px -10% 0px' : '0px -6% 0px 0px',
+      threshold: 0.04
+    });
 
     revealables.forEach(function (el) {
       if (opening.indexOf(el) === -1) io.observe(el);

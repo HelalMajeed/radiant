@@ -10,103 +10,61 @@
 <link rel="icon" type="image/png" href="../../../assets/favicon.png">
 <link rel="stylesheet" href="../docs.css">
 </head>
-<body data-page="usage">
+<body data-page="usage" data-prev="../pricing/" data-next="../api-keys/">
 
 <a class="skip" href="#main">Skip to content</a>
 
-<header class="topbar">
-  <nav class="navset" aria-label="Site">
-    <a class="navlink" href="../../../">Radiant</a>
-    <a class="navlink is-here" href="../">Docs</a>
-    <a class="navlink" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
-  </nav>
-  <a class="brand" href="../../../">
-    <img src="../../../assets/radiant-mark.png" alt="" draggable="false">
-    <b>radiant<i>/oorr</i></b>
-  </a>
-  <div class="topbar-end">
-    <a class="bracket" href="https://api.oorr.ai" target="_blank" rel="noopener">.open&nbsp;<em>{API}</em></a>
-    <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      .index
-    </button>
-  </div>
-  <div class="readbar" id="readbar" aria-hidden="true"><i></i></div>
-</header>
+<div class="shell">
 
-<div class="layout">
+  <header class="topbar">
+    <nav class="navset" aria-label="Site">
+      <a class="navlink" href="../../../">Radiant</a>
+      <a class="navlink is-here" href="../">Docs</a>
+      <a class="navlink" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    </nav>
+    <a class="brand" href="../../../">
+      <img src="../../../assets/radiant-mark.png" alt="" draggable="false">
+      <b>radiant<i>/oorr</i></b>
+    </a>
+    <div class="topbar-end">
+      <a class="bracket" href="https://api.oorr.ai" target="_blank" rel="noopener">.open&nbsp;<em>{API}</em></a>
+    </div>
+    <div class="readbar" id="readbar" aria-hidden="true"><i></i></div>
+  </header>
 
-  <nav class="sidebar" id="sidebar" aria-label="Documentation">
-    <p class="sb-title"><span>Index</span><b>10</b></p>
-    <ol class="sb-list">
-        <li><a href="../"><i class="sb-idx">01</i><span class="sb-label">Introduction</span></a></li>
-        <li><a href="../quickstart/"><i class="sb-idx">02</i><span class="sb-label">Quickstart</span></a></li>
-        <li><a href="../authentication/"><i class="sb-idx">03</i><span class="sb-label">Authentication</span></a></li>
-        <li><a href="../models/"><i class="sb-idx">04</i><span class="sb-label">Models</span></a></li>
-        <li><a href="../chat/"><i class="sb-idx">05</i><span class="sb-label">Chat</span></a></li>
-        <li><a href="../vision/"><i class="sb-idx">06</i><span class="sb-label">Vision</span></a></li>
-        <li><a href="../api-reference/"><i class="sb-idx">07</i><span class="sb-label">API Reference</span></a></li>
-        <li><a href="../pricing/"><i class="sb-idx">08</i><span class="sb-label">Pricing</span></a></li>
-        <li><a href="../usage/" class="is-current" aria-current="page"><i class="sb-idx">09</i><span class="sb-label">Usage</span></a></li>
-        <li><a href="../api-keys/"><i class="sb-idx">10</i><span class="sb-label">API Keys</span></a></li>
+  <nav class="rail" aria-label="Documentation">
+    <ol class="rail-list">
+      <li><a class="rail-item" href="../"><i>01</i>Introduction</a></li>
+      <li><a class="rail-item" href="../quickstart/"><i>02</i>Quickstart</a></li>
+      <li><a class="rail-item" href="../authentication/"><i>03</i>Authentication</a></li>
+      <li><a class="rail-item" href="../models/"><i>04</i>Models</a></li>
+      <li><a class="rail-item" href="../chat/"><i>05</i>Chat</a></li>
+      <li><a class="rail-item" href="../vision/"><i>06</i>Vision</a></li>
+      <li><a class="rail-item" href="../api-reference/"><i>07</i>API Reference</a></li>
+      <li><a class="rail-item" href="../pricing/"><i>08</i>Pricing</a></li>
+      <li><a class="rail-item is-current" href="../usage/" aria-current="page"><i>09</i>Usage</a></li>
+      <li><a class="rail-item" href="../api-keys/"><i>10</i>API Keys</a></li>
     </ol>
-
-    <div class="route" aria-hidden="true">
-      <svg viewBox="0 0 200 64" preserveAspectRatio="none" role="presentation">
-        <path d="M10 0 V16 H104 V22"/>
-        <path d="M104 40 V48 H190 V64"/>
-        <circle class="node" cx="104" cy="31" r="9"/>
-        <path class="bolt" d="M104 26.5 V35.5 M99.5 31 H108.5 M100.8 27.8 L107.2 34.2 M107.2 27.8 L100.8 34.2"/>
-        <circle class="pip" cx="190" cy="56" r="1.7"/>
-      </svg>
-    </div>
-
-    <section class="legend" aria-labelledby="legend-title">
-      <div class="legend-frame" aria-hidden="true"></div>
-      <header class="legend-head">
-        <span class="legend-title" id="legend-title">Status legend</span>
-        <span class="legend-led" aria-hidden="true"></span>
-      </header>
-      <ul class="legend-list">
-        <li>
-          <button class="lg lg--live" type="button" data-status="live" aria-pressed="false">
-            <span class="lg-glyph" aria-hidden="true"><i class="g-core"></i><i class="g-ring"></i><i class="g-ring g-ring--2"></i></span>
-            <span class="lg-text"><b>Live</b><em>Deployed and callable</em></span>
-            <span class="lg-track" aria-hidden="true"><i></i></span>
-          </button>
-        </li>
-        <li>
-          <button class="lg lg--pending" type="button" data-status="pending" aria-pressed="false">
-            <span class="lg-glyph" aria-hidden="true"><i class="g-orbit"></i><i class="g-sat"></i></span>
-            <span class="lg-text"><b>Pending</b><em>Specified, not shipped</em></span>
-            <span class="lg-track" aria-hidden="true"><i></i></span>
-          </button>
-        </li>
-        <li>
-          <button class="lg lg--ui" type="button" data-status="ui" aria-pressed="false">
-            <span class="lg-glyph" aria-hidden="true"><i class="g-wire"></i><i class="g-wire g-wire--2"></i></span>
-            <span class="lg-text"><b>UI only</b><em>Interface shell, no backend</em></span>
-            <span class="lg-track" aria-hidden="true"><i></i></span>
-          </button>
-        </li>
-      </ul>
-      <p class="legend-foot"><span class="kbd">hover</span> to trace on this page</p>
-    </section>
   </nav>
-
-  <main class="content" id="main">
-
-    <div class="page-head">
-      <p class="ph-num"><b>09</b><i>&nbsp;/&nbsp;10</i></p>
-      <h1>Usage <span class="pill pill--ui">UI only</span></h1>
-      <canvas class="globe" id="globe" aria-hidden="true"></canvas>
-    </div>
 
       <div class="ticker" aria-hidden="true">
         <div class="ticker-run"><span>SARGON 1.5 — PRODUCTION MODEL — <b>LIVE</b><em> ///////// </em></span><span>CHAT + VISION — <b>LIVE</b><em> ///////// </em></span><span>SSE STREAMING — <b>LIVE</b><em> ///////// </em></span><span>BASE URL API.OORR.AI — <b>LIVE</b><em> ///////// </em></span><span>API-KEY AUTH — <b>PENDING</b><em> ///////// </em></span><span>BILLING — <b>PENDING</b><em> ///////// </em></span><span>USAGE READ-BACK — <b>NOT IMPLEMENTED</b><em> ///////// </em></span><span>SARGON 1.5 — PRODUCTION MODEL — <b>LIVE</b><em> ///////// </em></span><span>CHAT + VISION — <b>LIVE</b><em> ///////// </em></span><span>SSE STREAMING — <b>LIVE</b><em> ///////// </em></span><span>BASE URL API.OORR.AI — <b>LIVE</b><em> ///////// </em></span><span>API-KEY AUTH — <b>PENDING</b><em> ///////// </em></span><span>BILLING — <b>PENDING</b><em> ///////// </em></span><span>USAGE READ-BACK — <b>NOT IMPLEMENTED</b><em> ///////// </em></span></div>
       </div>
 
-    <article class="prose">
+  <main class="deck" id="deck" tabindex="-1">
+    <div class="track" id="track">
+      <article class="reader prose" id="main">
+
+        <div class="cover">
+          <p class="ph-num"><b>09</b><i>&nbsp;/&nbsp;10</i></p>
+          <h1>Usage <span class="pill pill--ui">UI only</span></h1>
+          <p class="cover-hint">scroll to read <i aria-hidden="true">&rsaquo;</i></p>
+        </div>
+
+        <div class="cover-figure" aria-hidden="true">
+          <canvas class="globe" id="globe"></canvas>
+        </div>
+
 <div class="note note--warn">
         <p class="note-title">No usage API exists — these tiles cannot be populated</p>
         <p>
@@ -178,25 +136,50 @@
         API-key work described next.
       </p>
 
-      <nav class="pager" aria-label="Documentation pages">
-        <a class="pager-link pager-prev" href="../pricing/"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l-6 6 6 6"/></svg>Previous</span><b>Pricing</b></a>
-        <a class="pager-link pager-next" href="../api-keys/"><span>Next<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6l6 6-6 6"/></svg></span><b>API Keys</b></a>
-      </nav>
-    </article>
-
-    <aside class="toc" id="toc" aria-label="On this page"></aside>
+      <div class="endcap">
+        <div class="endcap-link" aria-hidden="true">
+          <svg viewBox="0 0 200 74" role="presentation">
+            <path d="M8 0 V26 H92 V30"/>
+            <path d="M92 52 V58 H192 V74"/>
+            <path class="dia" d="M92 33 L109 46 L92 59 L75 46 Z"/>
+            <text x="92" y="49" text-anchor="middle">10</text>
+          </svg>
+        </div>
+        <p class="end-kicker">Next &mdash; 10</p>
+        <h2 class="end-title">API Keys</h2>
+        <p class="end-hint">keep scrolling <i aria-hidden="true">&rsaquo;</i></p>
+        <a class="bracket" href="../api-keys/">.open&nbsp;<em>{API KEYS}</em></a>
+      </div>
+      </article>
+    </div>
   </main>
-</div>
 
-<footer class="docfoot">
-  <span>OORR AI API</span>
-  <span class="dot" aria-hidden="true"></span>
-  <a href="../../../">Radiant</a>
-  <span class="dot" aria-hidden="true"></span>
-  <a href="https://radiant-iraq.com" target="_blank" rel="noopener">radiant-iraq.com</a>
-  <span class="dot" aria-hidden="true"></span>
-  <a href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
-</footer>
+  <div class="footbar">
+    <div class="legend" role="group" aria-label="Status legend — point at one to trace it through the page">
+      <button class="lg lg--live" type="button" data-status="live" aria-pressed="false" title="Live — Deployed and callable">
+        <span class="lg-glyph" aria-hidden="true"><i class="g-core"></i><i class="g-ring"></i><i class="g-ring g-ring--2"></i></span>
+        <span class="lg-text"><b>Live</b></span>
+      </button>
+      <button class="lg lg--pending" type="button" data-status="pending" aria-pressed="false" title="Pending — Specified, not shipped">
+        <span class="lg-glyph" aria-hidden="true"><i class="g-orbit"></i><i class="g-sat"></i></span>
+        <span class="lg-text"><b>Pending</b></span>
+      </button>
+      <button class="lg lg--ui" type="button" data-status="ui" aria-pressed="false" title="UI only — Interface shell, no backend">
+        <span class="lg-glyph" aria-hidden="true"><i class="g-wire"></i><i class="g-wire g-wire--2"></i></span>
+        <span class="lg-text"><b>UI only</b></span>
+      </button>
+    </div>
+    <div class="chips" id="chips" aria-label="Sections on this page"></div>
+    <div class="colcount">
+      <span id="colcount"><b>01</b> / 01</span>
+      <span class="stepper">
+        <button class="step" type="button" id="stepprev" aria-label="Previous column">&lsaquo;</button>
+        <button class="step" type="button" id="stepnext" aria-label="Next column">&rsaquo;</button>
+      </span>
+    </div>
+  </div>
+
+</div>
 
 <script src="../docs.js"></script>
 </body>
