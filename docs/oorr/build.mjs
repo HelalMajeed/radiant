@@ -14,10 +14,9 @@
  * refresh of /docs/oorr/usage. Separate files work on any static host with zero
  * configuration, and back/forward comes free from the browser.
  *
- * The shell is the terminal chrome: slash-prefixed nav, the numbered index
- * rail, a dotted routing connector, the status-legend diagnostics block, the
- * status ticker and the wireframe globe. Presentation lives in docs.css;
- * behaviour — including the globe — in docs.js.
+ * The shared cinematic shell surrounds the unchanged API reference.
+ * docs.css/docs.js supply the documentation controls; cinematic.css and
+ * cinematic.js supply its background, page entrances and interaction motion.
  *
  * Usage:  node docs/oorr/build.mjs
  *
@@ -29,6 +28,38 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+
+// Only a still frame was supplied. Set this to a local MP4/WebM path relative
+// to /docs/oorr/ when the original footage is available; the frame stays as
+// its poster and as the reduced-motion / failed-playback fallback.
+const BACKGROUND_VIDEO = "";
+
+function background(docs) {
+  const poster = `${docs}assets/crystal-frame.png`;
+  return `
+<div class="cinema-scene" aria-hidden="true">
+  <div class="scene-aura scene-aura--blue"></div>
+  <div class="scene-aura scene-aura--violet"></div>
+  <canvas class="scene-particles"></canvas>
+  <div class="crystal-position"><div class="crystal-depth">
+    <div class="crystal-halo"></div>
+    <div class="crystal-float"><img src="${poster}" width="240" height="240" alt="" fetchpriority="high"></div>
+    <span class="crystal-orbit crystal-orbit--one"><i></i></span>
+    <span class="crystal-orbit crystal-orbit--two"><i></i></span>
+    <span class="crystal-orbit crystal-orbit--three"><i></i></span>
+  </div></div>
+${BACKGROUND_VIDEO ? `  <video class="cinema-video" muted loop playsinline preload="metadata" poster="${poster}" tabindex="-1"><source src="${esc(docs + BACKGROUND_VIDEO)}"></video>` : ""}
+  <div class="scene-shade"></div>
+</div>`;
+}
+
+function entries(docs) {
+  return `<nav class="entry-grid" aria-label="Explore the API">
+    <a class="entry-card" href="${docs}chat/"><span>01 / CONVERSATION</span><strong>Chat &amp; streaming</strong><i aria-hidden="true">↗</i></a>
+    <a class="entry-card" href="${docs}vision/"><span>02 / VISION</span><strong>Work with images</strong><i aria-hidden="true">↗</i></a>
+    <a class="entry-card" href="${docs}api-reference/"><span>03 / REFERENCE</span><strong>Explore the endpoints</strong><i aria-hidden="true">↗</i></a>
+  </nav>`;
+}
 
 /**
  * The documentation outline. `dir` is the emitted directory ("" = the docs
@@ -260,26 +291,29 @@ function render(page, index, lede) {
 <meta name="color-scheme" content="dark">
 <link rel="icon" type="image/png" href="${site}assets/favicon.png">
 <link rel="stylesheet" href="${docs}docs.css">
+<link rel="stylesheet" href="${docs}cinematic.css">
 </head>
 <body data-page="${page.id}">
+
+${background(docs)}
 
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="topbar">
   <nav class="navset" aria-label="Site">
     <a class="navlink" href="${site}">Radiant</a>
-    <a class="navlink is-here" href="${docs || "./"}">Docs</a>
+    <a class="navlink is-here" href="${docs || "./"}">API Platform</a>
     <a class="navlink" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
   </nav>
   <a class="brand" href="${site}">
     <img src="${site}assets/radiant-mark.png" alt="" draggable="false">
-    <b>radiant<i>/oorr</i></b>
+    <b>oorr<i> / api platform</i></b>
   </a>
   <div class="topbar-end">
     <a class="bracket" href="https://api.oorr.ai" target="_blank" rel="noopener">.open&nbsp;<em>{API}</em></a>
     <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      .index
+      Menu
     </button>
   </div>
   <div class="readbar" id="readbar" aria-hidden="true"><i></i></div>
@@ -294,14 +328,15 @@ ${sidebar(page)}
   <main class="content" id="main">
 
     <div class="page-head">
-      <p class="ph-num"><b>${pad(index + 1)}</b><i>&nbsp;/&nbsp;${pad(PAGES.length)}</i></p>
-      <h1>${headingHtml}</h1>${ledeHtml}
-      <canvas class="globe" id="globe" aria-hidden="true"></canvas>
+      <p class="ph-num"><span>DEVELOPER PLATFORM</span><i aria-hidden="true">/</i><b>${pad(index + 1)} — ${esc(page.label)}</b></p>
+      <h1>${page.dir === "" ? '<span class="hero-title-line">OORR API</span><span class="hero-title-line hero-title-line--silver">Platform.</span>' : headingHtml}</h1>${ledeHtml}
+      ${page.dir === "" ? `<div class="hero-actions"><a class="hero-primary" href="quickstart/">Start building <span aria-hidden="true">↗</span></a><a class="hero-secondary" href="api-reference/">Explore the API <span aria-hidden="true">→</span></a></div><a class="hero-scroll" href="#documentation-content"><span aria-hidden="true">↓</span> Introduction to Sargon 1.5</a>` : `<p class="chapter-subtitle">OORR API Platform <span aria-hidden="true">/</span> Sargon 1.5</p>`}
     </div>
 
+${page.dir === "" ? entries(docs) : ""}
 ${ticker()}
 
-    <article class="prose">
+    <article class="prose" id="documentation-content">
 ${content}
 ${pager(index)}    </article>
 
@@ -320,6 +355,7 @@ ${pager(index)}    </article>
 </footer>
 
 <script src="${docs}docs.js"></script>
+<script src="${docs}cinematic.js"></script>
 </body>
 </html>
 `;
