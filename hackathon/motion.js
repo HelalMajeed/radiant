@@ -9,12 +9,15 @@
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
   const links = [...document.querySelectorAll('.section-nav a[href^="#"]')];
   const sections = [...document.querySelectorAll('main section')];
+  const workflows = [...document.querySelectorAll('.steps')];
   const linkedSections = links.map(link => ({link, section: document.getElementById(link.hash.slice(1))})).filter(item => item.section);
   let override = null;
   try { override = localStorage.getItem('edfaa-zain-motion'); } catch { /* Storage is optional. */ }
   let enabled = false;
   let scrollFrame = 0;
   let pointerFrame = 0;
+  let spotlightFrame = 0;
+  let spotlight = null;
   let pointer = {x: 0, y: 0};
 
   function resetDepth() {
@@ -33,8 +36,28 @@
     if (!enabled) resetDepth();
   }
 
+  // Keep each heading's original text and spaces; only its visual entrance changes.
+  document.querySelectorAll('main h2').forEach(heading => {
+    const text = heading.textContent;
+    const fragment = document.createDocumentFragment();
+    let wordIndex = 0;
+    for (const token of text.split(/(\s+)/)) {
+      if (!token.trim()) { fragment.appendChild(document.createTextNode(token)); continue; }
+      const word = document.createElement('span');
+      word.className = 'heading-word';
+      const inner = document.createElement('span');
+      inner.className = 'heading-word-inner';
+      inner.textContent = token;
+      inner.style.setProperty('--word-delay', `${Math.min(wordIndex++ * 55, 440)}ms`);
+      word.appendChild(inner);
+      fragment.appendChild(word);
+    }
+    heading.replaceChildren(fragment);
+  });
+
   // Register observers before enabling hidden entrance states.
-  const revealTargets = [...document.querySelectorAll('main .eyebrow,main h2,main .lede,main .statement,main .card,main .ar-card,main .layer,main .agent,main .step,main .tbl-wrap,main .mini,main .note,main .closing p,.hero-line > div,footer .row')];
+  const revealTargets = [...document.querySelectorAll('main .eyebrow,main h2,main .lede,main .statement,main .card,main .ar-card,main .layer,main .agent,main .step,main .tbl-wrap,main .mini,main .note,main .closing p,.hero-line > div')];
+  const tableRows = [...document.querySelectorAll('.tbl tbody tr')];
   const revealObserver = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
     for (const entry of entries) {
       if (!entry.isIntersecting) continue;
@@ -46,9 +69,15 @@
     target.classList.add('reveal');
     const siblings = [...target.parentElement.children].filter(el => revealTargets.includes(el));
     target.style.setProperty('--reveal-delay', `${Math.min(siblings.indexOf(target) * 75, 300)}ms`);
+    if (target.matches('.card,.ar-card,.agent')) target.style.setProperty('--reveal-x', siblings.indexOf(target) % 2 ? '10px' : '-10px');
     if (revealObserver) revealObserver.observe(target);
     else target.classList.add('is-revealed');
   }
+  tableRows.forEach(row => {
+    row.classList.add('row-reveal');
+    if (revealObserver) revealObserver.observe(row);
+    else row.classList.add('is-revealed');
+  });
 
   const sceneObserver = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
     for (const entry of entries) {
@@ -69,6 +98,21 @@
     node.appendChild(signal);
   });
   document.querySelectorAll('.arrow').forEach((arrow, index) => arrow.style.setProperty('--signal-delay', `${index * .35}s`));
+  for (const group of document.querySelectorAll('.hero-line,.loop')) {
+    [...group.children].forEach((node, index) => {
+      const beam = document.createElement('span');
+      beam.className = 'flow-beam';
+      beam.setAttribute('aria-hidden','true');
+      beam.style.setProperty('--signal-delay', `${index * .75}s`);
+      node.appendChild(beam);
+    });
+  }
+  workflows.forEach(workflow => {
+    const rail = document.createElement('span');
+    rail.className = 'workflow-progress';
+    rail.setAttribute('aria-hidden','true');
+    workflow.appendChild(rail);
+  });
 
   function updateScroll() {
     scrollFrame = 0;
@@ -85,6 +129,10 @@
     }
     const range = document.documentElement.scrollHeight - innerHeight;
     nav.style.setProperty('--read-progress', range > 0 ? String(Math.min(1, Math.max(0, scrollY / range))) : '0');
+    if (enabled) for (const workflow of workflows) {
+      const rect = workflow.getBoundingClientRect();
+      workflow.style.setProperty('--workflow-progress', String(Math.min(1, Math.max(0, (innerHeight * .6 - rect.top) / rect.height))));
+    }
   }
   function scheduleScroll() {
     if (!scrollFrame) scrollFrame = requestAnimationFrame(updateScroll);
@@ -96,8 +144,23 @@
   links.forEach(link => link.addEventListener('click', () => {
     const section = document.getElementById(link.hash.slice(1));
     section.classList.add('section-revealed');
-    section.querySelectorAll('.reveal').forEach(el => el.classList.add('is-revealed'));
+    section.querySelectorAll('.reveal,.row-reveal').forEach(el => el.classList.add('is-revealed'));
   }));
+
+  document.querySelector('main').addEventListener('pointermove', event => {
+    if (!enabled || !finePointer.matches) return;
+    const card = event.target.closest('.card,.ar-card');
+    if (!card) return;
+    spotlight = {card, x: event.clientX, y: event.clientY};
+    if (spotlightFrame) return;
+    spotlightFrame = requestAnimationFrame(() => {
+      spotlightFrame = 0;
+      if (!enabled) return;
+      const rect = spotlight.card.getBoundingClientRect();
+      spotlight.card.style.setProperty('--spotlight-x', `${spotlight.x - rect.left}px`);
+      spotlight.card.style.setProperty('--spotlight-y', `${spotlight.y - rect.top}px`);
+    });
+  }, {passive: true});
 
   hero.addEventListener('pointermove', event => {
     if (!enabled || !finePointer.matches || !hero.classList.contains('scene-active')) return;
