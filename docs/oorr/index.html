@@ -5,37 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Introduction — OORR AI · Radiant</title>
 <meta name="description" content="What OORR AI's Sargon 1.5 model does, its base URL, and the endpoints it exposes.">
-<meta name="theme-color" content="#04050a">
+<meta name="theme-color" content="#000000">
 <meta name="color-scheme" content="dark">
 <link rel="icon" type="image/png" href="../../assets/favicon.png">
 <link rel="stylesheet" href="docs.css">
 </head>
 <body data-page="introduction">
 
-<div class="stage" aria-hidden="true">
-  <div class="stage-grid"></div>
-  <div class="stage-aurora"></div>
-  <canvas class="stage-net" id="stagenet"></canvas>
-  <div class="stage-vignette"></div>
-</div>
-
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="topbar">
+  <nav class="navset" aria-label="Site">
+    <a class="navlink" href="../../">Radiant</a>
+    <a class="navlink is-here" href="./">Docs</a>
+    <a class="navlink" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+  </nav>
   <a class="brand" href="../../">
-    <span class="brand-orb" aria-hidden="true"><img src="../../assets/radiant-mark.png" alt="" draggable="false"></span>
-    <b>Radiant</b>
+    <img src="../../assets/radiant-mark.png" alt="" draggable="false">
+    <b>radiant<i>/oorr</i></b>
   </a>
-  <span class="crumb">Docs<i aria-hidden="true"></i><em>OORR AI</em></span>
   <div class="topbar-end">
-    <span class="uplink" title="api.oorr.ai is live">
-      <i class="uplink-dot" aria-hidden="true"></i>Uplink
-      <em class="uplink-bars" aria-hidden="true"><s></s><s></s><s></s><s></s></em>
-    </span>
-    <a class="ghost-link" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    <a class="bracket" href="https://api.oorr.ai" target="_blank" rel="noopener">.open&nbsp;<em>{API}</em></a>
     <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      Menu
+      .index
     </button>
   </div>
   <div class="readbar" id="readbar" aria-hidden="true"><i></i></div>
@@ -44,25 +37,27 @@
 <div class="layout">
 
   <nav class="sidebar" id="sidebar" aria-label="Documentation">
-    <p class="sb-title"><span>Curriculum</span><b>10 modules</b></p>
+    <p class="sb-title"><span>Index</span><b>10</b></p>
     <ol class="sb-list">
-        <li><a href="./" class="is-current" aria-current="page"><i class="sb-idx">01</i><span class="sb-label">Introduction</span><span class="sb-mark" aria-hidden="true"></span></a></li>
-        <li><a href="quickstart/"><i class="sb-idx">02</i><span class="sb-label">Quickstart</span><span class="sb-mark" aria-hidden="true"></span></a></li>
-        <li><a href="authentication/"><i class="sb-idx">03</i><span class="sb-label">Authentication</span><span class="sb-mark" aria-hidden="true"></span></a></li>
-        <li><a href="models/"><i class="sb-idx">04</i><span class="sb-label">Models</span><span class="sb-mark" aria-hidden="true"></span></a></li>
-        <li><a href="chat/"><i class="sb-idx">05</i><span class="sb-label">Chat</span><span class="sb-mark" aria-hidden="true"></span></a></li>
-        <li><a href="vision/"><i class="sb-idx">06</i><span class="sb-label">Vision</span><span class="sb-mark" aria-hidden="true"></span></a></li>
-        <li><a href="api-reference/"><i class="sb-idx">07</i><span class="sb-label">API Reference</span><span class="sb-mark" aria-hidden="true"></span></a></li>
-        <li><a href="pricing/"><i class="sb-idx">08</i><span class="sb-label">Pricing</span><span class="sb-mark" aria-hidden="true"></span></a></li>
-        <li><a href="usage/"><i class="sb-idx">09</i><span class="sb-label">Usage</span><span class="sb-mark" aria-hidden="true"></span></a></li>
-        <li><a href="api-keys/"><i class="sb-idx">10</i><span class="sb-label">API Keys</span><span class="sb-mark" aria-hidden="true"></span></a></li>
+        <li><a href="./" class="is-current" aria-current="page"><i class="sb-idx">01</i><span class="sb-label">Introduction</span></a></li>
+        <li><a href="quickstart/"><i class="sb-idx">02</i><span class="sb-label">Quickstart</span></a></li>
+        <li><a href="authentication/"><i class="sb-idx">03</i><span class="sb-label">Authentication</span></a></li>
+        <li><a href="models/"><i class="sb-idx">04</i><span class="sb-label">Models</span></a></li>
+        <li><a href="chat/"><i class="sb-idx">05</i><span class="sb-label">Chat</span></a></li>
+        <li><a href="vision/"><i class="sb-idx">06</i><span class="sb-label">Vision</span></a></li>
+        <li><a href="api-reference/"><i class="sb-idx">07</i><span class="sb-label">API Reference</span></a></li>
+        <li><a href="pricing/"><i class="sb-idx">08</i><span class="sb-label">Pricing</span></a></li>
+        <li><a href="usage/"><i class="sb-idx">09</i><span class="sb-label">Usage</span></a></li>
+        <li><a href="api-keys/"><i class="sb-idx">10</i><span class="sb-label">API Keys</span></a></li>
     </ol>
 
-    <div class="helix" aria-hidden="true">
-      <svg viewBox="0 0 240 44" preserveAspectRatio="none" role="presentation">
-        <g class="rungs"><line x1="6" y1="17.4" x2="6" y2="26.6" style="--i:0;transform-origin:6px 22px"/><line x1="15" y1="11.4" x2="15" y2="32.6" style="--i:1;transform-origin:15px 22px"/><line x1="24" y1="7.7" x2="24" y2="36.3" style="--i:2;transform-origin:24px 22px"/><line x1="33" y1="7.2" x2="33" y2="36.8" style="--i:3;transform-origin:33px 22px"/><line x1="42" y1="9.9" x2="42" y2="34.1" style="--i:4;transform-origin:42px 22px"/><line x1="51" y1="15.2" x2="51" y2="28.8" style="--i:5;transform-origin:51px 22px"/><line x1="60" y1="22.0" x2="60" y2="22.0" style="--i:6;transform-origin:60px 22px"/><line x1="69" y1="28.8" x2="69" y2="15.2" style="--i:7;transform-origin:69px 22px"/><line x1="78" y1="34.1" x2="78" y2="9.9" style="--i:8;transform-origin:78px 22px"/><line x1="87" y1="36.8" x2="87" y2="7.2" style="--i:9;transform-origin:87px 22px"/><line x1="96" y1="36.3" x2="96" y2="7.7" style="--i:10;transform-origin:96px 22px"/><line x1="105" y1="32.6" x2="105" y2="11.4" style="--i:11;transform-origin:105px 22px"/><line x1="114" y1="26.6" x2="114" y2="17.4" style="--i:12;transform-origin:114px 22px"/><line x1="123" y1="19.7" x2="123" y2="24.3" style="--i:13;transform-origin:123px 22px"/><line x1="132" y1="13.2" x2="132" y2="30.8" style="--i:14;transform-origin:132px 22px"/><line x1="141" y1="8.6" x2="141" y2="35.4" style="--i:15;transform-origin:141px 22px"/><line x1="150" y1="7.0" x2="150" y2="37.0" style="--i:16;transform-origin:150px 22px"/><line x1="159" y1="8.6" x2="159" y2="35.4" style="--i:17;transform-origin:159px 22px"/><line x1="168" y1="13.2" x2="168" y2="30.8" style="--i:18;transform-origin:168px 22px"/><line x1="177" y1="19.7" x2="177" y2="24.3" style="--i:19;transform-origin:177px 22px"/><line x1="186" y1="26.6" x2="186" y2="17.4" style="--i:20;transform-origin:186px 22px"/><line x1="195" y1="32.6" x2="195" y2="11.4" style="--i:21;transform-origin:195px 22px"/><line x1="204" y1="36.3" x2="204" y2="7.7" style="--i:22;transform-origin:204px 22px"/><line x1="213" y1="36.8" x2="213" y2="7.2" style="--i:23;transform-origin:213px 22px"/><line x1="222" y1="34.1" x2="222" y2="9.9" style="--i:24;transform-origin:222px 22px"/><line x1="231" y1="28.8" x2="231" y2="15.2" style="--i:25;transform-origin:231px 22px"/></g>
-        <polyline class="strand strand--a" points="0,22.0 4,18.9 8,15.9 12,13.2 16,10.9 20,9.0 24,7.7 28,7.1 32,7.1 36,7.7 40,9.0 44,10.9 48,13.2 52,15.9 56,18.9 60,22.0 64,25.1 68,28.1 72,30.8 76,33.1 80,35.0 84,36.3 88,36.9 92,36.9 96,36.3 100,35.0 104,33.1 108,30.8 112,28.1 116,25.1 120,22.0 124,18.9 128,15.9 132,13.2 136,10.9 140,9.0 144,7.7 148,7.1 152,7.1 156,7.7 160,9.0 164,10.9 168,13.2 172,15.9 176,18.9 180,22.0 184,25.1 188,28.1 192,30.8 196,33.1 200,35.0 204,36.3 208,36.9 212,36.9 216,36.3 220,35.0 224,33.1 228,30.8 232,28.1 236,25.1 240,22.0"/>
-        <polyline class="strand strand--b" points="0,22.0 4,25.1 8,28.1 12,30.8 16,33.1 20,35.0 24,36.3 28,36.9 32,36.9 36,36.3 40,35.0 44,33.1 48,30.8 52,28.1 56,25.1 60,22.0 64,18.9 68,15.9 72,13.2 76,10.9 80,9.0 84,7.7 88,7.1 92,7.1 96,7.7 100,9.0 104,10.9 108,13.2 112,15.9 116,18.9 120,22.0 124,25.1 128,28.1 132,30.8 136,33.1 140,35.0 144,36.3 148,36.9 152,36.9 156,36.3 160,35.0 164,33.1 168,30.8 172,28.1 176,25.1 180,22.0 184,18.9 188,15.9 192,13.2 196,10.9 200,9.0 204,7.7 208,7.1 212,7.1 216,7.7 220,9.0 224,10.9 228,13.2 232,15.9 236,18.9 240,22.0"/>
+    <div class="route" aria-hidden="true">
+      <svg viewBox="0 0 200 64" preserveAspectRatio="none" role="presentation">
+        <path d="M10 0 V16 H104 V22"/>
+        <path d="M104 40 V48 H190 V64"/>
+        <circle class="node" cx="104" cy="31" r="9"/>
+        <path class="bolt" d="M104 26.5 V35.5 M99.5 31 H108.5 M100.8 27.8 L107.2 34.2 M107.2 27.8 L100.8 34.2"/>
+        <circle class="pip" cx="190" cy="56" r="1.7"/>
       </svg>
     </div>
 
@@ -100,33 +95,22 @@
   </nav>
 
   <main class="content" id="main">
-    <article class="prose">
-      <div class="page-head">
-        <div class="ph-top">
-          <p class="eyebrow"><i aria-hidden="true"></i>OORR AI</p>
-          <span class="ph-index" aria-label="Module 1 of 10">
-            <b>01</b><i>/</i>10
-          </span>
-        </div>
-        <h1>Introduction <span class="pill pill--live">Live</span></h1>
+
+    <div class="page-head">
+      <p class="ph-num"><b>01</b><i>&nbsp;/&nbsp;10</i></p>
+      <h1>Introduction <span class="pill pill--live">Live</span></h1>
         <p class="lede">OORR AI is an Arabic-first tutoring model served by Radiant. Its current
         production model is <strong>Sargon&nbsp;1.5</strong>. This is the reference
         for its HTTP API: how to call chat and image requests, what the responses
         contain, how tokens are counted, and which limits apply.</p>
-        <div class="ph-rule" aria-hidden="true"><i></i></div>
-        <svg class="reticle" viewBox="0 0 120 120" aria-hidden="true">
-          <circle class="r-outer" cx="60" cy="60" r="56"/>
-          <circle class="r-mid" cx="60" cy="60" r="44"/>
-          <circle class="r-inner" cx="60" cy="60" r="30"/>
-          <line class="r-cross" x1="60" y1="0" x2="60" y2="14"/>
-          <line class="r-cross" x1="60" y1="106" x2="60" y2="120"/>
-          <line class="r-cross" x1="0" y1="60" x2="14" y2="60"/>
-          <line class="r-cross" x1="106" y1="60" x2="120" y2="60"/>
-          <circle class="r-core" cx="60" cy="60" r="3.4"/>
-          <g class="r-sat"><circle cx="60" cy="16" r="2.6"/></g>
-        </svg>
+      <canvas class="globe" id="globe" aria-hidden="true"></canvas>
+    </div>
+
+      <div class="ticker" aria-hidden="true">
+        <div class="ticker-run"><span>SARGON 1.5 — PRODUCTION MODEL — <b>LIVE</b><em> ///////// </em></span><span>CHAT + VISION — <b>LIVE</b><em> ///////// </em></span><span>SSE STREAMING — <b>LIVE</b><em> ///////// </em></span><span>BASE URL API.OORR.AI — <b>LIVE</b><em> ///////// </em></span><span>API-KEY AUTH — <b>PENDING</b><em> ///////// </em></span><span>BILLING — <b>PENDING</b><em> ///////// </em></span><span>USAGE READ-BACK — <b>NOT IMPLEMENTED</b><em> ///////// </em></span><span>SARGON 1.5 — PRODUCTION MODEL — <b>LIVE</b><em> ///////// </em></span><span>CHAT + VISION — <b>LIVE</b><em> ///////// </em></span><span>SSE STREAMING — <b>LIVE</b><em> ///////// </em></span><span>BASE URL API.OORR.AI — <b>LIVE</b><em> ///////// </em></span><span>API-KEY AUTH — <b>PENDING</b><em> ///////// </em></span><span>BILLING — <b>PENDING</b><em> ///////// </em></span><span>USAGE READ-BACK — <b>NOT IMPLEMENTED</b><em> ///////// </em></span></div>
       </div>
 
+    <article class="prose">
 <p>
         OORR AI answers students' questions in Arabic in the voice of an Iraqi
         teacher, working through problems step by step. Radiant is the platform that

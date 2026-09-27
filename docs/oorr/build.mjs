@@ -14,9 +14,10 @@
  * refresh of /docs/oorr/usage. Separate files work on any static host with zero
  * configuration, and back/forward comes free from the browser.
  *
- * The shell is the "academy console" chrome: the animated stage, the numbered
- * module rail, the DNA-strand divider, the status-legend diagnostics module and
- * the page-head reticle. Presentation lives in docs.css; behaviour in docs.js.
+ * The shell is the terminal chrome: slash-prefixed nav, the numbered index
+ * rail, a dotted routing connector, the status-legend diagnostics block, the
+ * status ticker and the wireframe globe. Presentation lives in docs.css;
+ * behaviour — including the globe — in docs.js.
  *
  * Usage:  node docs/oorr/build.mjs
  *
@@ -65,6 +66,17 @@ const LEGEND = [
   { key: "live",    label: "Live",    note: "Deployed and callable" },
   { key: "pending", label: "Pending", note: "Specified, not shipped" },
   { key: "ui",      label: "UI only", note: "Interface shell, no backend" },
+];
+
+/** The status strip that runs under every page head. Facts only. */
+const TICKER = [
+  { t: "Sargon 1.5 — production model", s: "live" },
+  { t: "Chat + vision", s: "live" },
+  { t: "SSE streaming", s: "live" },
+  { t: "Base URL api.oorr.ai", s: "live" },
+  { t: "API-key auth", s: "pending" },
+  { t: "Billing", s: "pending" },
+  { t: "Usage read-back", s: "not implemented" },
 ];
 
 const bySourceId = new Map(PAGES.map((p) => [p.id, p]));
@@ -119,39 +131,20 @@ function rewriteCrossLinks(html, page) {
 }
 
 /**
- * The strand divider between the module list and the legend: two sine strands
- * sampled into polylines, with rungs drawn between them at matching x. Both are
- * generated from one formula so the rungs always land exactly on the strands.
- * The animation lives in docs.css — here we only emit geometry, plus an index
- * per rung so the wave can be staggered.
+ * The routing connector that divides the index from the diagnostics block: a
+ * dotted trace that leaves the rail, turns two corners and terminates on a
+ * marked node, the way the reference routes a line between blocks. The trace
+ * is broken either side of the node so the glyph sits on the wire rather than
+ * on top of it.
  */
-function helixSvg() {
-  const W = 240, MID = 22, AMP = 15, PERIOD = 120;
-  const at = (x) => Math.sin((x / PERIOD) * Math.PI * 2) * AMP;
-
-  const a = [];
-  const b = [];
-  for (let x = 0; x <= W; x += 4) {
-    const y = at(x);
-    a.push(`${x},${(MID - y).toFixed(1)}`);
-    b.push(`${x},${(MID + y).toFixed(1)}`);
-  }
-
-  const rungs = [];
-  let i = 0;
-  for (let x = 6; x <= W - 6; x += 9, i += 1) {
-    const y = at(x);
-    rungs.push(
-      `<line x1="${x}" y1="${(MID - y).toFixed(1)}" x2="${x}" y2="${(MID + y).toFixed(1)}" ` +
-      `style="--i:${i};transform-origin:${x}px ${MID}px"/>`
-    );
-  }
-
-  return `    <div class="helix" aria-hidden="true">
-      <svg viewBox="0 0 ${W} 44" preserveAspectRatio="none" role="presentation">
-        <g class="rungs">${rungs.join("")}</g>
-        <polyline class="strand strand--a" points="${a.join(" ")}"/>
-        <polyline class="strand strand--b" points="${b.join(" ")}"/>
+function routeSvg() {
+  return `    <div class="route" aria-hidden="true">
+      <svg viewBox="0 0 200 64" preserveAspectRatio="none" role="presentation">
+        <path d="M10 0 V16 H104 V22"/>
+        <path d="M104 40 V48 H190 V64"/>
+        <circle class="node" cx="104" cy="31" r="9"/>
+        <path class="bolt" d="M104 26.5 V35.5 M99.5 31 H108.5 M100.8 27.8 L107.2 34.2 M107.2 27.8 L100.8 34.2"/>
+        <circle class="pip" cx="190" cy="56" r="1.7"/>
       </svg>
     </div>`;
 }
@@ -198,33 +191,30 @@ function sidebar(current) {
     const isCurrent = p.id === current.id;
     return `        <li><a href="${href}"${isCurrent ? ' class="is-current" aria-current="page"' : ""}>` +
       `<i class="sb-idx">${pad(i + 1)}</i>` +
-      `<span class="sb-label">${p.label}</span>` +
-      `<span class="sb-mark" aria-hidden="true"></span></a></li>`;
+      `<span class="sb-label">${p.label}</span></a></li>`;
   }).join("\n");
 
-  return `    <p class="sb-title"><span>Curriculum</span><b>${PAGES.length} modules</b></p>
+  return `    <p class="sb-title"><span>Index</span><b>${pad(PAGES.length)}</b></p>
     <ol class="sb-list">
 ${items}
     </ol>
 
-${helixSvg()}
+${routeSvg()}
 
 ${legend()}`;
 }
 
-/** The page head's orbital instrument. Decorative; hidden on narrow screens. */
-function reticle() {
-  return `        <svg class="reticle" viewBox="0 0 120 120" aria-hidden="true">
-          <circle class="r-outer" cx="60" cy="60" r="56"/>
-          <circle class="r-mid" cx="60" cy="60" r="44"/>
-          <circle class="r-inner" cx="60" cy="60" r="30"/>
-          <line class="r-cross" x1="60" y1="0" x2="60" y2="14"/>
-          <line class="r-cross" x1="60" y1="106" x2="60" y2="120"/>
-          <line class="r-cross" x1="0" y1="60" x2="14" y2="60"/>
-          <line class="r-cross" x1="106" y1="60" x2="120" y2="60"/>
-          <circle class="r-core" cx="60" cy="60" r="3.4"/>
-          <g class="r-sat"><circle cx="60" cy="16" r="2.6"/></g>
-        </svg>`;
+/**
+ * The status ticker. Two identical runs sit side by side so the strip can loop
+ * on a -50% translate with no seam.
+ */
+function ticker() {
+  const run = TICKER
+    .map((i) => `<span>${i.t.toUpperCase()} — <b>${i.s.toUpperCase()}</b><em> ///////// </em></span>`)
+    .join("");
+  return `      <div class="ticker" aria-hidden="true">
+        <div class="ticker-run">${run}${run}</div>
+      </div>`;
 }
 
 /** Previous / next links, so the reading order survives the page split. */
@@ -266,37 +256,30 @@ function render(page, index, lede) {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${esc(page.title)} — OORR AI · Radiant</title>
 <meta name="description" content="${esc(DESCRIPTIONS[page.id] ?? "")}">
-<meta name="theme-color" content="#04050a">
+<meta name="theme-color" content="#000000">
 <meta name="color-scheme" content="dark">
 <link rel="icon" type="image/png" href="${site}assets/favicon.png">
 <link rel="stylesheet" href="${docs}docs.css">
 </head>
 <body data-page="${page.id}">
 
-<div class="stage" aria-hidden="true">
-  <div class="stage-grid"></div>
-  <div class="stage-aurora"></div>
-  <canvas class="stage-net" id="stagenet"></canvas>
-  <div class="stage-vignette"></div>
-</div>
-
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="topbar">
+  <nav class="navset" aria-label="Site">
+    <a class="navlink" href="${site}">Radiant</a>
+    <a class="navlink is-here" href="${docs || "./"}">Docs</a>
+    <a class="navlink" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+  </nav>
   <a class="brand" href="${site}">
-    <span class="brand-orb" aria-hidden="true"><img src="${site}assets/radiant-mark.png" alt="" draggable="false"></span>
-    <b>Radiant</b>
+    <img src="${site}assets/radiant-mark.png" alt="" draggable="false">
+    <b>radiant<i>/oorr</i></b>
   </a>
-  <span class="crumb">Docs<i aria-hidden="true"></i><em>OORR AI</em></span>
   <div class="topbar-end">
-    <span class="uplink" title="api.oorr.ai is live">
-      <i class="uplink-dot" aria-hidden="true"></i>Uplink
-      <em class="uplink-bars" aria-hidden="true"><s></s><s></s><s></s><s></s></em>
-    </span>
-    <a class="ghost-link" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
+    <a class="bracket" href="https://api.oorr.ai" target="_blank" rel="noopener">.open&nbsp;<em>{API}</em></a>
     <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      Menu
+      .index
     </button>
   </div>
   <div class="readbar" id="readbar" aria-hidden="true"><i></i></div>
@@ -309,19 +292,16 @@ ${sidebar(page)}
   </nav>
 
   <main class="content" id="main">
-    <article class="prose">
-      <div class="page-head">
-        <div class="ph-top">
-          <p class="eyebrow"><i aria-hidden="true"></i>OORR AI</p>
-          <span class="ph-index" aria-label="Module ${index + 1} of ${PAGES.length}">
-            <b>${pad(index + 1)}</b><i>/</i>${pad(PAGES.length)}
-          </span>
-        </div>
-        <h1>${headingHtml}</h1>${ledeHtml}
-        <div class="ph-rule" aria-hidden="true"><i></i></div>
-${reticle()}
-      </div>
 
+    <div class="page-head">
+      <p class="ph-num"><b>${pad(index + 1)}</b><i>&nbsp;/&nbsp;${pad(PAGES.length)}</i></p>
+      <h1>${headingHtml}</h1>${ledeHtml}
+      <canvas class="globe" id="globe" aria-hidden="true"></canvas>
+    </div>
+
+${ticker()}
+
+    <article class="prose">
 ${content}
 ${pager(index)}    </article>
 

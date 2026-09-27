@@ -1,6 +1,6 @@
 /* OORR AI docs — copy buttons, language tabs, compact mobile nav, scroll-spy,
-   a deliberately small syntax highlighter, and the console's motion layer:
-   the constellation stage, scroll-reveal, the reading bar and the status-legend
+   a deliberately small syntax highlighter, and the terminal's motion layer:
+   the wireframe globe, scroll-reveal, the reading bar and the status-legend
    trace. No dependencies, no network.
 
    Every moving part is optional. If scripting fails or motion is reduced, the
@@ -498,94 +498,269 @@
     revealables.forEach(flourish);
   }
 
-  /* ------------------------------------------------------------- constellation
-     The neural field behind the page: slow-drifting nodes that link up when
-     they pass near one another. Decorative, so it is skipped entirely on
-     narrow screens, under reduced motion, and while the tab is hidden. */
+  /* -------------------------------------------------------------------- globe
+     The one instrument on the page: a wireframe Earth. Coastlines are drawn as
+     outlines over a lat/long cage, with relay hubs, their yellow spokes, and
+     dotted long-haul links between them. Everything is projected by hand from
+     spherical coordinates — no data files, no dependencies.
 
-  var canvas = $('#stagenet');
-  if (canvas && MOTION_OK && window.innerWidth >= 760) {
+     The coastlines are coarse on purpose: at this size the silhouette is what
+     reads, so each landmass is a short ordered ring rather than real geometry. */
+
+  var LAND = [
+    // North America, down the Atlantic and back up the Pacific
+    [[-168,66],[-162,70],[-145,70],[-128,70],[-115,69],[-100,69],[-88,68],[-80,63],
+     [-65,60],[-55,52],[-60,47],[-66,45],[-70,42],[-75,37],[-81,31],[-80,26],
+     [-84,30],[-90,29],[-97,26],[-97,21],[-91,18],[-88,21],[-87,16],[-84,10],
+     [-78,8],[-83,13],[-95,16],[-105,21],[-110,24],[-114,28],[-117,33],[-122,38],
+     [-124,45],[-130,54],[-138,59],[-150,60],[-160,56],[-165,60]],
+    // South America
+    [[-78,8],[-72,11],[-62,10],[-52,5],[-50,0],[-44,-2],[-38,-5],[-35,-8],[-39,-15],
+     [-45,-23],[-48,-25],[-53,-33],[-58,-38],[-62,-40],[-65,-45],[-68,-52],[-70,-55],
+     [-75,-52],[-74,-45],[-73,-37],[-71,-30],[-70,-23],[-71,-18],[-77,-12],[-81,-6],[-80,0]],
+    // Africa
+    [[-17,15],[-16,20],[-13,28],[-10,35],[0,36],[10,37],[20,32],[30,31],[34,28],
+     [37,22],[39,15],[43,11],[51,12],[48,5],[42,-2],[40,-10],[40,-17],[35,-24],
+     [32,-29],[25,-34],[18,-34],[15,-27],[12,-18],[13,-8],[9,4],[3,6],[-5,5],[-13,9]],
+    // Eurasia
+    [[-10,36],[-9,42],[-2,44],[3,43],[12,45],[18,42],[24,41],[28,41],[36,36],[36,31],
+     [34,29],[43,29],[48,29],[56,25],[60,25],[66,25],[72,20],[73,16],[77,8],[80,13],
+     [83,18],[87,21],[92,21],[95,16],[98,10],[100,5],[104,2],[105,10],[108,15],
+     [110,21],[117,23],[122,30],[121,38],[126,40],[128,43],[135,45],[140,50],
+     [143,54],[150,59],[158,61],[163,60],[170,66],[179,66],[179,71],[160,70],
+     [140,73],[120,74],[100,76],[80,73],[70,72],[60,70],[50,69],[40,67],[33,70],
+     [28,70],[20,69],[12,65],[5,60],[8,57],[4,52],[-2,48],[-9,43]],
+    // Greenland
+    [[-45,60],[-42,64],[-32,68],[-22,70],[-20,76],[-30,82],[-45,83],[-58,82],[-62,76],[-55,68],[-50,62]],
+    // Australia
+    [[113,-22],[114,-26],[115,-32],[118,-35],[125,-32],[132,-32],[137,-35],[140,-38],
+     [146,-39],[150,-37],[153,-30],[153,-25],[146,-19],[142,-11],[136,-12],[130,-12],
+     [126,-14],[122,-17],[117,-20]],
+    // and the islands that keep the silhouette honest
+    [[-5,50],[-4,53],[-3,55],[-2,57],[-3,58],[0,57],[1,53],[-1,51]],
+    [[-10,52],[-9,55],[-6,55],[-6,52]],
+    [[-24,64],[-22,66],[-15,66],[-14,64],[-19,63]],
+    [[130,31],[132,34],[136,35],[139,35],[141,39],[142,42],[145,44],[143,43],[140,38],[137,35],[133,33],[131,32]],
+    [[43,-25],[45,-25],[48,-20],[50,-16],[49,-13],[46,-16],[44,-21]],
+    [[166,-46],[168,-47],[172,-44],[174,-41],[176,-38],[178,-37],[175,-40],[171,-43]],
+    [[109,2],[117,4],[119,-2],[114,-4],[110,-2]],
+    [[95,5],[100,0],[106,-6],[104,-6],[98,1]],
+    [[-85,22],[-80,23],[-75,20],[-80,21]]
+  ];
+
+  /* Relay hubs, each with short spokes out to the endpoints it serves, and the
+     long-haul links that run between hubs. Positions are chosen to sit over
+     land, so the network reads as sited rather than scattered. */
+  var HUBS = [
+    { lat:  54, lon: -104, spokes: [[7,-15],[-5,-19],[9,5]] },
+    { lat:  49, lon:    9, spokes: [[6,-11],[-5,11],[7,15]] },
+    { lat:   8, lon:  -62, spokes: [[9,-9],[-7,-11],[-11,7],[6,10]] },
+    { lat: -20, lon:  -45, spokes: [[7,-8]] },
+    { lat:   6, lon:   21, spokes: [[9,11],[-8,6]] },
+    { lat:  35, lon:  -95, spokes: [] }
+  ];
+  var LINKS = [[0,1],[0,2],[2,3],[2,4],[1,4],[5,2],[0,5]];
+
+  var globeEl = $('#globe');
+  if (globeEl && globeEl.getContext) {
     try {
-      var ctx = canvas.getContext('2d');
-      var dpr = Math.min(window.devicePixelRatio || 1, 2);
-      var nodes = [];
-      var w = 0, h = 0, raf = 0;
-      var LINK = 132;
+      (function () {
+        var ctx = globeEl.getContext('2d');
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var W = 0, H = 0, R = 0, CX = 0, CY = 0;
+        var rot = 20, raf = 0;
+        var TILT = -0.30;                     // seen slightly from above
+        var sinT = Math.sin(TILT), cosT = Math.cos(TILT);
+        var ACCENT = '#e8f55e';
 
-      var seed = function () {
-        w = canvas.clientWidth;
-        h = canvas.clientHeight;
-        canvas.width = Math.round(w * dpr);
-        canvas.height = Math.round(h * dpr);
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-        var count = Math.min(72, Math.round((w * h) / 26000));
-        nodes = [];
-        for (var i = 0; i < count; i++) {
-          nodes.push({
-            x: Math.random() * w,
-            y: Math.random() * h,
-            vx: (Math.random() - 0.5) * 0.16,
-            vy: (Math.random() - 0.5) * 0.16,
-            r: Math.random() * 1.3 + 0.5,
-            violet: Math.random() > 0.62
-          });
+        function project(lat, lon) {
+          var la = lat * Math.PI / 180;
+          var lo = (lon + rot) * Math.PI / 180;
+          var cl = Math.cos(la);
+          var x = cl * Math.sin(lo);
+          var y = Math.sin(la);
+          var z = cl * Math.cos(lo);
+          var y2 = y * cosT - z * sinT;
+          var z2 = y * sinT + z * cosT;
+          return { x: CX + x * R, y: CY - y2 * R, front: z2 > 0.02, z: z2 };
         }
-      };
 
-      var frame = function () {
-        ctx.clearRect(0, 0, w, h);
+        function size() {
+          W = globeEl.clientWidth;
+          H = globeEl.clientHeight;
+          if (!W || !H) return false;
+          globeEl.width = Math.round(W * dpr);
+          globeEl.height = Math.round(H * dpr);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          R = Math.min(W, H) * 0.44;
+          CX = W / 2;
+          CY = H / 2;
+          return true;
+        }
 
-        for (var i = 0; i < nodes.length; i++) {
-          var n = nodes[i];
-          n.x += n.vx;
-          n.y += n.vy;
-          // Wrap rather than bounce: no node ever piles up against an edge.
-          if (n.x < -10) n.x = w + 10; else if (n.x > w + 10) n.x = -10;
-          if (n.y < -10) n.y = h + 10; else if (n.y > h + 10) n.y = -10;
+        // One pass of the lat/long cage. `front` picks which hemisphere to ink.
+        function cage(front) {
+          var lat, lon, p, started;
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = front ? 'rgba(255,255,255,.22)' : 'rgba(255,255,255,.07)';
+          ctx.beginPath();
+          for (lat = -75; lat <= 75; lat += 15) {
+            started = false;
+            for (lon = -180; lon <= 180; lon += 4) {
+              p = project(lat, lon);
+              if (p.front !== front) { started = false; continue; }
+              if (!started) { ctx.moveTo(p.x, p.y); started = true; } else ctx.lineTo(p.x, p.y);
+            }
+          }
+          // meridians stop short of the poles: drawn all the way in, they
+          // converge into a knot wherever a pole faces the viewer
+          for (lon = -180; lon < 180; lon += 15) {
+            started = false;
+            for (lat = -68; lat <= 68; lat += 4) {
+              p = project(lat, lon);
+              if (p.front !== front) { started = false; continue; }
+              if (!started) { ctx.moveTo(p.x, p.y); started = true; } else ctx.lineTo(p.x, p.y);
+            }
+          }
+          ctx.stroke();
+        }
 
-          for (var j = i + 1; j < nodes.length; j++) {
-            var m = nodes[j];
-            var dx = n.x - m.x, dy = n.y - m.y;
-            var d2 = dx * dx + dy * dy;
-            if (d2 > LINK * LINK) continue;
-            var a = (1 - Math.sqrt(d2) / LINK) * 0.17;
-            ctx.strokeStyle = 'rgba(122,164,255,' + a.toFixed(3) + ')';
-            ctx.lineWidth = 0.6;
+        // Coastlines, drawn only where both ends of a segment face us.
+        function coast(front) {
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = front ? 'rgba(255,255,255,.78)' : 'rgba(255,255,255,.1)';
+          ctx.beginPath();
+          for (var i = 0; i < LAND.length; i++) {
+            var ring = LAND[i];
+            for (var j = 0; j < ring.length; j++) {
+              var a = project(ring[j][1], ring[j][0]);
+              var k = (j + 1) % ring.length;
+              var b = project(ring[k][1], ring[k][0]);
+              if (a.front !== front || b.front !== front) continue;
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+            }
+          }
+          ctx.stroke();
+        }
+
+        function dottedLink(a, b) {
+          ctx.fillStyle = 'rgba(255,255,255,.85)';
+          for (var t = 0; t <= 1.0001; t += 1 / 30) {
+            var p = project(a.lat + (b.lat - a.lat) * t, a.lon + (b.lon - a.lon) * t);
+            if (!p.front) continue;
+            ctx.globalAlpha = 0.25 + p.z * 0.6;
             ctx.beginPath();
-            ctx.moveTo(n.x, n.y);
-            ctx.lineTo(m.x, m.y);
+            ctx.arc(p.x, p.y, 1.15, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        }
+
+        function hubs() {
+          for (var i = 0; i < HUBS.length; i++) {
+            var h = HUBS[i];
+            var p = project(h.lat, h.lon);
+            if (!p.front) continue;
+            var a = 0.35 + p.z * 0.65;
+
+            // yellow spokes out to the endpoints this hub serves
+            for (var sIdx = 0; sIdx < h.spokes.length; sIdx++) {
+              var e = project(h.lat + h.spokes[sIdx][0], h.lon + h.spokes[sIdx][1]);
+              if (!e.front) continue;
+              ctx.globalAlpha = a * 0.85;
+              ctx.strokeStyle = ACCENT;
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(p.x, p.y);
+              ctx.lineTo(e.x, e.y);
+              ctx.stroke();
+              ctx.fillStyle = ACCENT;
+              ctx.beginPath();
+              ctx.arc(e.x, e.y, 2.4, 0, Math.PI * 2);
+              ctx.fill();
+            }
+
+            // the hub itself: a ringed marker with a bar through it
+            ctx.globalAlpha = a;
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 7.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,.92)';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 7.5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(p.x - 3.4, p.y + 1.2);
+            ctx.lineTo(p.x + 3.4, p.y - 1.2);
             ctx.stroke();
           }
-
-          ctx.fillStyle = n.violet ? 'rgba(157,123,255,.55)' : 'rgba(120,175,255,.5)';
-          ctx.beginPath();
-          ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.globalAlpha = 1;
         }
 
-        raf = requestAnimationFrame(frame);
-      };
+        // Two shallow rings and a survey line, sitting off the sphere.
+        function orbits() {
+          ctx.strokeStyle = 'rgba(255,255,255,.13)';
+          ctx.lineWidth = 1;
+          var rings = [[-0.46, 1.2, 0.24], [0.42, 1.28, 0.17]];
+          for (var i = 0; i < rings.length; i++) {
+            ctx.save();
+            ctx.translate(CX, CY);
+            ctx.rotate(rings[i][0]);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, R * rings[i][1], R * rings[i][2], 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+          }
+          ctx.strokeStyle = 'rgba(255,255,255,.07)';
+          ctx.beginPath();
+          ctx.moveTo(CX + R * 1.5, CY - R * 1.25);
+          ctx.lineTo(CX - R * 0.9, CY + R * 1.4);
+          ctx.stroke();
+        }
 
-      var start = function () { if (!raf) raf = requestAnimationFrame(frame); };
-      var stop = function () { cancelAnimationFrame(raf); raf = 0; };
+        function frame() {
+          ctx.clearRect(0, 0, W, H);
+          orbits();
+          cage(false);
+          coast(false);
+          cage(true);
+          coast(true);
+          for (var l = 0; l < LINKS.length; l++) dottedLink(HUBS[LINKS[l][0]], HUBS[LINKS[l][1]]);
+          hubs();
+          if (MOTION_OK) {
+            rot += 0.07;
+            if (rot > 360) rot -= 360;
+            raf = requestAnimationFrame(frame);
+          }
+        }
 
-      seed();
-      start();
+        if (!size()) return;
+        frame();
+        globeEl.classList.add('is-on');
 
-      var resizeQueued = false;
-      window.addEventListener('resize', function () {
-        if (resizeQueued) return;
-        resizeQueued = true;
-        setTimeout(function () { resizeQueued = false; seed(); }, 220);
-      });
+        var resizeQueued = false;
+        window.addEventListener('resize', function () {
+          if (resizeQueued) return;
+          resizeQueued = true;
+          setTimeout(function () {
+            resizeQueued = false;
+            if (size() && !MOTION_OK) frame();
+          }, 220);
+        });
 
-      document.addEventListener('visibilitychange', function () {
-        if (document.hidden) stop(); else start();
-      });
+        document.addEventListener('visibilitychange', function () {
+          if (!MOTION_OK) return;
+          if (document.hidden) { cancelAnimationFrame(raf); raf = 0; }
+          else if (!raf) raf = requestAnimationFrame(frame);
+        });
+      })();
     } catch (e) {
-      // A decorative layer is never worth a broken page.
-      canvas.style.display = 'none';
+      // An instrument is never worth a broken page.
+      globeEl.style.display = 'none';
     }
   }
 
