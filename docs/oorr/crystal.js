@@ -127,12 +127,27 @@
         line(point(a),a+j*.2,.04,[1,0,0]);line(point(b),b+j*.2,.04,[1,0,0]);
       }
     }
-    // Three close Saturn-like ring bands, plus two inclined satellite tracks.
-    orbits.forEach(([radius,tilt,twist],index)=>{
+    // A few open meridians quietly suggest a ball, following the cloud's
+    // breathing and brief deformation instead of creating a rigid wire cage.
+    const meridians=mobile?3:4,arcSteps=160;
+    for(let j=0;j<meridians;j++) {
+      const longitude=j/meridians*Math.PI,phase=j*.73;
+      const point=a=>[Math.cos(a)*Math.cos(longitude)*1.13,Math.sin(a)*1.16,Math.cos(a)*Math.sin(longitude)*1.13];
+      for(let i=0;i<arcSteps;i++) {
+        for(const f of [i/arcSteps,(i+1)/arcSteps]) {
+          const a=phase+f*4.9;
+          line(point(a),a+j*.4,.13*Math.pow(Math.sin(f*Math.PI),.6),[1,0,0]);
+        }
+      }
+    }
+    // Two faint inner orbits add roundness beside the existing Saturn bands.
+    // They share the scene's slow rotation without adding more satellites.
+    const ringPaths=[...orbits,[1.38,.76,.35],[1.53,-.63,-.44]];
+    ringPaths.forEach(([radius,tilt,twist],index)=>{
       const contours=index<3?3:1;
       for(let band=0;band<contours;band++) {
         const r=radius+(band-(contours-1)/2)*.015;
-        const alpha=band===Math.floor(contours/2)?(index<3?.34:.2):.11;
+        const alpha=band===Math.floor(contours/2)?(index<3?.34:index<5?.2:.16):.11;
         for(let i=0;i<240;i++) {
           for(const a of [i/240*Math.PI*2,(i+1)/240*Math.PI*2]) line([a,r,tilt],a+index*.7,alpha,[2,0,twist]);
         }
