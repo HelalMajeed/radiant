@@ -4,6 +4,7 @@
   const scene = document.querySelector('.cinema-scene');
   if (!scene) return;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  let motionReduced = reduced.matches;
   const canvas = scene.querySelector('canvas');
   const ctx = canvas.getContext('2d');
   const video = scene.querySelector('video');
@@ -18,9 +19,9 @@
   }));
 
   document.querySelectorAll('.sb-list li').forEach((item, i) => item.style.setProperty('--nav-index', i));
-  if (!reduced.matches) document.documentElement.classList.add('cinema-ready');
+  if (!motionReduced) document.documentElement.classList.add('cinema-ready');
 
-  if (!reduced.matches && 'IntersectionObserver' in window) {
+  if (!motionReduced && 'IntersectionObserver' in window) {
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (!entry.isIntersecting) return;
@@ -55,7 +56,7 @@
   }
   function frame(now) {
     raf = 0;
-    if (reduced.matches || document.hidden || !ctx) return;
+    if (motionReduced || document.hidden || !ctx) return;
     if (now - lastFrame >= 1000 / 30) {
       clock += Math.min(now - lastFrame, 50); lastFrame = now; paint();
     }
@@ -64,13 +65,13 @@
   function syncMotion() {
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
-    scene.classList.toggle('scene-sleeping', document.hidden || reduced.matches);
+    scene.classList.toggle('scene-sleeping', document.hidden || motionReduced);
     document.documentElement.classList.toggle('scene-sleeping', document.hidden);
-    if (reduced.matches) {
+    if (motionReduced) {
       document.documentElement.classList.remove('cinema-ready');
       cards.forEach(card => card.classList.add('is-visible'));
     }
-    if (!document.hidden && !reduced.matches) {
+    if (!document.hidden && !motionReduced) {
       lastFrame = performance.now(); raf = requestAnimationFrame(frame);
       if (video) video.play().catch(() => scene.classList.remove('has-video'));
     } else if (video) { video.pause(); scene.classList.remove('has-video'); }
@@ -78,12 +79,23 @@
   }
   if (video) {
     video.muted = true;
-    video.addEventListener('playing', () => scene.classList.add('has-video'));
+    video.addEventListener('playing', () => {
+      // A queued play request can finish after the motion preference changes.
+      if (motionReduced || document.hidden) {
+        video.pause();
+        scene.classList.remove('has-video');
+      } else {
+        scene.classList.add('has-video');
+      }
+    });
     video.addEventListener('error', () => scene.classList.remove('has-video'));
   }
   window.addEventListener('resize', resize);
   window.addEventListener('pageshow', syncMotion);
   document.addEventListener('visibilitychange', syncMotion);
-  reduced.addEventListener('change', syncMotion);
+  reduced.addEventListener('change', event => {
+    motionReduced = event.matches;
+    syncMotion();
+  });
   resize(); syncMotion();
 })();

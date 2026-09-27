@@ -29,19 +29,19 @@ import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-// Only a still frame was supplied. Set this to a local MP4/WebM path relative
-// to /docs/oorr/ when the original footage is available; the frame stays as
-// its poster and as the reduced-motion / failed-playback fallback.
-const BACKGROUND_VIDEO = "";
+// Original footage: https://www.pinterest.com/pin/351912466939967/
+// Remuxed without recompression, with MP4 metadata moved first for fast playback.
+// A frame from that same video covers reduced motion and failed playback.
+const BACKGROUND_VIDEO = "assets/crystal-background.mp4";
 
 function background(docs) {
-  const poster = `${docs}assets/crystal-frame.png`;
+  const poster = `${docs}assets/crystal-poster.webp`;
   return `
 <div class="cinema-scene" aria-hidden="true">
   <div class="scene-aura scene-aura--blue"></div>
   <div class="scene-aura scene-aura--violet"></div>
   <canvas class="scene-particles"></canvas>
-  <img class="cinema-poster" src="${poster}" width="240" height="240" alt="" fetchpriority="high">
+  <img class="cinema-poster" src="${poster}" width="720" height="720" alt="" fetchpriority="high">
 ${BACKGROUND_VIDEO ? `  <video class="cinema-video" muted loop playsinline preload="metadata" poster="${poster}" tabindex="-1"><source src="${esc(docs + BACKGROUND_VIDEO)}"></video>` : ""}
   <div class="scene-shade"></div>
 </div>`;
