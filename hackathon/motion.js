@@ -4,15 +4,12 @@
   const nav = document.querySelector('.nav');
   const hero = document.querySelector('.hero');
   const depth = document.querySelector('.dollar-depth');
-  const toggle = document.querySelector('.motion-toggle');
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
   const links = [...document.querySelectorAll('.section-nav a[href^="#"]')];
   const sections = [...document.querySelectorAll('main section')];
   const workflows = [...document.querySelectorAll('.steps')];
   const linkedSections = links.map(link => ({link, section: document.getElementById(link.hash.slice(1))})).filter(item => item.section);
-  let override = null;
-  try { override = localStorage.getItem('edfaa-zain-motion'); } catch { /* Storage is optional. */ }
   let enabled = false;
   let scrollFrame = 0;
   let pointerFrame = 0;
@@ -27,12 +24,9 @@
   }
 
   function applyPreference() {
-    enabled = override === 'on' || (override !== 'off' && !reduceMotion.matches);
+    enabled = !reduceMotion.matches;
     root.classList.toggle('motion-on', enabled);
     root.classList.toggle('motion-paused', !enabled);
-    toggle.setAttribute('aria-pressed', String(!enabled));
-    toggle.querySelector('.motion-label').textContent = enabled ? 'Motion on' : 'Motion off';
-    toggle.title = enabled ? 'Pause animations' : 'Enable animations';
     if (!enabled) resetDepth();
   }
 
@@ -180,12 +174,6 @@
   document.addEventListener('visibilitychange', () => {
     root.classList.toggle('page-away', document.hidden);
     if (document.hidden) resetDepth();
-  });
-  toggle.hidden = false;
-  toggle.addEventListener('click', () => {
-    override = enabled ? 'off' : 'on';
-    try { localStorage.setItem('edfaa-zain-motion', override); } catch { /* Nonpersistent control still works. */ }
-    applyPreference();
   });
   reduceMotion.addEventListener('change', applyPreference);
   applyPreference();
