@@ -16,12 +16,12 @@ a,button{-webkit-tap-highlight-color:transparent}
 .scene-aura--blue{right:-16%;top:-25%;background:radial-gradient(circle,#7e9fff,transparent 65%)}
 .scene-aura--violet{left:25%;bottom:-60%;background:radial-gradient(circle,#bc83ce,transparent 65%);animation-delay:-12s}
 .scene-particles{position:absolute;inset:0;width:100%;height:100%;opacity:.75}
-/* Full-window original footage with a matching still-frame fallback. */
-.cinema-poster,.cinema-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;pointer-events:none}
-.cinema-poster{opacity:.43;mix-blend-mode:screen;filter:saturate(.8);transition:opacity 1s ease}
-.cinema-video{object-fit:cover;opacity:0;transition:opacity 1.5s ease}
-.cinema-scene.has-video .cinema-video{opacity:.4}
-.cinema-scene.has-video .cinema-poster{opacity:0}
+/* The sculpture is rendered at the current screen resolution, not enlarged video. */
+.cinema-poster,.cinema-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;pointer-events:none}
+.cinema-poster{opacity:.7;transition:opacity .6s ease}
+.cinema-art{opacity:0;transition:opacity 1.2s ease}
+.cinema-scene.has-crystal .cinema-art{opacity:.78}
+.cinema-scene.has-crystal .cinema-poster{opacity:0}
 .scene-shade{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 10%,#05060773 65%,#050607d1 100%),linear-gradient(90deg,#0506079c,transparent 40%,#05060726)}
 
 /* A quiet, stable frame around the moving artwork. Branding never animates. */
@@ -145,12 +145,6 @@ body[data-page="introduction"] .entry-grid{margin-bottom:68px}
 @keyframes scroll-cue{0%,100%{transform:translateY(-3px);opacity:.6}50%{transform:translateY(3px);opacity:1}}
 @keyframes card-sweep{0%,65%{transform:translateX(-130%)}90%,100%{transform:translateX(130%)}}
 @keyframes code-wake{0%{transform:translateX(-100%);opacity:0}20%{opacity:.8}100%{transform:translateX(385%);opacity:0}}
-@keyframes chapter-arrive{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-@keyframes chapter-leave{to{opacity:0;transform:translateY(-6px)}}
-@view-transition{navigation:auto}
-.topbar{view-transition-name:docs-topbar}.sidebar{view-transition-name:docs-sidebar}.cinema-scene{view-transition-name:docs-scene}
-::view-transition-old(root){animation:chapter-leave .2s ease both}::view-transition-new(root){animation:chapter-arrive .6s var(--ease-out) both}
-::view-transition-group(docs-topbar),::view-transition-group(docs-sidebar),::view-transition-group(docs-scene){animation:none}
 @media(min-width:1450px){.content{grid-template-columns:minmax(0,1fr) var(--toc)}.toc.is-active{display:block}.prose{padding-right:15px}}
 @media(min-width:1400px) and (max-width:1449px){.toc.is-active{display:none}}
 @media(max-width:1200px){:root{--sidebar:218px;--gutter:34px}.topbar{grid-template-columns:205px 1fr auto}.navset{gap:18px}.lede{max-width:400px;font-size:13px}body[data-page="introduction"] h1{font-size:79px}body[data-page="introduction"] .page-head{min-height:670px}.entry-card{padding:20px 16px}.entry-card strong{font-size:13px}.entry-card i{right:12px}}
@@ -175,8 +169,8 @@ body[data-page="introduction"] .entry-grid{margin-bottom:68px}
  body[data-page="introduction"] .ph-num{position:static;max-width:100%;font-size:7px;margin-bottom:34px}
 
  .scene-shade{background:linear-gradient(0deg,#05060780,transparent 70%,#0506078f)}
- .cinema-poster{opacity:.3}
- .cinema-scene.has-video .cinema-video{opacity:.3}
+ .cinema-poster{opacity:.5;object-position:60% center}
+ .cinema-scene.has-crystal .cinema-art{opacity:.58}
  body[data-page="introduction"] .lede{font-size:13px}
  body[data-page="introduction"] .entry-grid{margin-bottom:48px}
  .lede{font-size:13px;line-height:1.9;max-width:none;margin-top:22px}.hero-actions{gap:22px;margin-top:25px}.hero-primary,.hero-secondary{font-size:11px;gap:15px}.hero-primary{padding:14px 16px}.hero-scroll{font-size:8px;margin-top:27px}
@@ -188,9 +182,8 @@ body[data-page="introduction"] .entry-grid{margin-bottom:68px}
 }
 @media(max-width:360px){body[data-page="introduction"] h1{font-size:57px}.brand b i{font-size:8px}.brand{gap:8px}.topbar{padding:0 16px}.hero-actions{gap:16px}.hero-primary{padding:13px}.hero-secondary{font-size:10px}.ph-num{font-size:6.5px}}
 @media(prefers-reduced-motion:reduce){
- @view-transition{navigation:none}
  html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}
- .rv,.entry-card.cinema-reveal{transform:none!important}.rv,.entry-card.cinema-reveal{opacity:1!important}.cinema-video{display:none}.cinema-scene.has-video .cinema-poster{opacity:.43}.scene-particles{opacity:.4}
+ .rv,.entry-card.cinema-reveal{transform:none!important}.rv,.entry-card.cinema-reveal{opacity:1!important}.scene-particles{opacity:.4}
 }
 @media print{
  .cinema-scene,.hero-actions,.hero-scroll,.entry-grid{display:none!important}.topbar{position:static;background:#fff}.sidebar{display:none!important}.page-head{min-height:0!important;padding:24px 0!important}.hero-title-line--silver{-webkit-text-fill-color:#000;background:none}.prose::before{display:none}.docfoot{margin-left:0;background:white}.prose p,.prose li{color:#222}.note,.codewrap,.tablewrap,.panel,.price,.stat{background:#fff;box-shadow:none}.rv,.entry-card.cinema-reveal{opacity:1;transform:none}

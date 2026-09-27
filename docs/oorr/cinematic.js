@@ -5,9 +5,12 @@
   if (!scene) return;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   let motionReduced = reduced.matches;
-  const canvas = scene.querySelector('canvas');
+  const canvas = scene.querySelector('.scene-particles');
   const ctx = canvas.getContext('2d');
-  const video = scene.querySelector('video');
+  const art = scene.querySelector('.cinema-art');
+  const crystal = window.OorrCrystal && window.OorrCrystal.create(art);
+  const pointer = {x:0,y:0}, target = {x:0,y:0};
+  let quality = 1, slowFrames = 0;
   const cards = [...document.querySelectorAll('.entry-card')];
   let width = 0, height = 0, raf = 0, lastFrame = 0, clock = 0;
   const particles = Array.from({ length: 46 }, (_, i) => ({
@@ -37,6 +40,7 @@
   }
 
   function paint() {
+    if (crystal) crystal.render(clock / 1000 + 6, pointer);
     if (!ctx) return;
     ctx.clearRect(0, 0, width, height);
     for (const p of particles) {
@@ -49,6 +53,7 @@
   }
   function resize() {
     width = innerWidth; height = innerHeight;
+    if (crystal) crystal.resize(width, height, quality);
     if (!ctx) return;
     const dpr = Math.min(devicePixelRatio || 1, 1.5);
     canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
@@ -56,9 +61,19 @@
   }
   function frame(now) {
     raf = 0;
-    if (motionReduced || document.hidden || !ctx) return;
+    if (motionReduced || document.hidden) return;
     if (now - lastFrame >= 1000 / 30) {
-      clock += Math.min(now - lastFrame, 50); lastFrame = now; paint();
+      const elapsed = now - lastFrame;
+      clock += Math.min(elapsed, 80); lastFrame = now;
+      pointer.x += (target.x - pointer.x) * .035;
+      pointer.y += (target.y - pointer.y) * .035;
+      // Bound GPU work on slower devices; never grow an unbounded retina buffer.
+      slowFrames = elapsed > 70 ? slowFrames + 1 : Math.max(0, slowFrames - 1);
+      if (slowFrames > 80 && quality > .7) {
+        quality *= .82; slowFrames = 0;
+        if (crystal) crystal.resize(width, height, quality);
+      }
+      paint();
     }
     raf = requestAnimationFrame(frame);
   }
@@ -73,23 +88,18 @@
     }
     if (!document.hidden && !motionReduced) {
       lastFrame = performance.now(); raf = requestAnimationFrame(frame);
-      if (video) video.play().catch(() => scene.classList.remove('has-video'));
-    } else if (video) { video.pause(); scene.classList.remove('has-video'); }
+    }
     paint();
   }
-  if (video) {
-    video.muted = true;
-    video.addEventListener('playing', () => {
-      // A queued play request can finish after the motion preference changes.
-      if (motionReduced || document.hidden) {
-        video.pause();
-        scene.classList.remove('has-video');
-      } else {
-        scene.classList.add('has-video');
-      }
-    });
-    video.addEventListener('error', () => scene.classList.remove('has-video'));
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    window.addEventListener('pointermove', event => {
+      if (motionReduced) return;
+      target.x = event.clientX / innerWidth * 2 - 1;
+      target.y = event.clientY / innerHeight * 2 - 1;
+    }, {passive:true});
+    document.addEventListener('pointerleave', () => {target.x = 0; target.y = 0;});
   }
+  art.addEventListener('crystalrestore', () => {resize(); syncMotion();});
   window.addEventListener('resize', resize);
   window.addEventListener('pageshow', syncMotion);
   document.addEventListener('visibilitychange', syncMotion);
