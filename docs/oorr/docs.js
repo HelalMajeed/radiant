@@ -1,6 +1,6 @@
 /* OORR AI docs — copy buttons, language tabs, compact mobile nav, scroll-spy,
    a deliberately small syntax highlighter, and the terminal's motion layer:
-   the wireframe globe, scroll-reveal, the reading bar and the status-legend
+   the wireframe globe, scroll-reveal and the status-legend
    trace. No dependencies, no network.
 
    Every moving part is optional. If scripting fails or motion is reduced, the
@@ -336,27 +336,6 @@
       a.addEventListener('click', function () { setTimeout(mark, 700); });
     });
     mark();
-  }
-
-  /* --------------------------------------------------------------- reading bar
-     Progress through the article, drawn on the underside of the top bar. */
-
-  var readbar = $('#readbar i');
-  if (readbar) {
-    var ticking = false;
-    var drawBar = function () {
-      var doc = document.documentElement;
-      var span = doc.scrollHeight - window.innerHeight;
-      var pct = span > 0 ? (window.scrollY / span) * 100 : 0;
-      readbar.style.width = Math.max(0, Math.min(100, pct)) + '%';
-    };
-    window.addEventListener('scroll', function () {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(function () { ticking = false; drawBar(); });
-    }, { passive: true });
-    window.addEventListener('resize', drawBar);
-    drawBar();
   }
 
   /* ------------------------------------------------------------ legend trace

@@ -41,13 +41,7 @@ function background(docs) {
   <div class="scene-aura scene-aura--blue"></div>
   <div class="scene-aura scene-aura--violet"></div>
   <canvas class="scene-particles"></canvas>
-  <div class="crystal-position"><div class="crystal-depth">
-    <div class="crystal-halo"></div>
-    <div class="crystal-float"><img src="${poster}" width="240" height="240" alt="" fetchpriority="high"></div>
-    <span class="crystal-orbit crystal-orbit--one"><i></i></span>
-    <span class="crystal-orbit crystal-orbit--two"><i></i></span>
-    <span class="crystal-orbit crystal-orbit--three"><i></i></span>
-  </div></div>
+  <img class="cinema-poster" src="${poster}" width="240" height="240" alt="" fetchpriority="high">
 ${BACKGROUND_VIDEO ? `  <video class="cinema-video" muted loop playsinline preload="metadata" poster="${poster}" tabindex="-1"><source src="${esc(docs + BACKGROUND_VIDEO)}"></video>` : ""}
   <div class="scene-shade"></div>
 </div>`;
@@ -97,17 +91,6 @@ const LEGEND = [
   { key: "live",    label: "Live",    note: "Deployed and callable" },
   { key: "pending", label: "Pending", note: "Specified, not shipped" },
   { key: "ui",      label: "UI only", note: "Interface shell, no backend" },
-];
-
-/** The status strip that runs under every page head. Facts only. */
-const TICKER = [
-  { t: "Sargon 1.5 — production model", s: "live" },
-  { t: "Chat + vision", s: "live" },
-  { t: "SSE streaming", s: "live" },
-  { t: "Base URL api.oorr.ai", s: "live" },
-  { t: "API-key auth", s: "pending" },
-  { t: "Billing", s: "pending" },
-  { t: "Usage read-back", s: "not implemented" },
 ];
 
 const bySourceId = new Map(PAGES.map((p) => [p.id, p]));
@@ -235,19 +218,6 @@ ${routeSvg()}
 ${legend()}`;
 }
 
-/**
- * The status ticker. Two identical runs sit side by side so the strip can loop
- * on a -50% translate with no seam.
- */
-function ticker() {
-  const run = TICKER
-    .map((i) => `<span>${i.t.toUpperCase()} — <b>${i.s.toUpperCase()}</b><em> ///////// </em></span>`)
-    .join("");
-  return `      <div class="ticker" aria-hidden="true">
-        <div class="ticker-run">${run}${run}</div>
-      </div>`;
-}
-
 /** Previous / next links, so the reading order survives the page split. */
 function pager(index) {
   const prev = PAGES[index - 1];
@@ -316,7 +286,6 @@ ${background(docs)}
       Menu
     </button>
   </div>
-  <div class="readbar" id="readbar" aria-hidden="true"><i></i></div>
 </header>
 
 <div class="layout">
@@ -334,7 +303,6 @@ ${sidebar(page)}
     </div>
 
 ${page.dir === "" ? entries(docs) : ""}
-${ticker()}
 
     <article class="prose" id="documentation-content">
 ${content}

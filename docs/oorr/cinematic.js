@@ -4,15 +4,11 @@
   const scene = document.querySelector('.cinema-scene');
   if (!scene) return;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const fine = matchMedia('(pointer: fine)');
   const canvas = scene.querySelector('canvas');
   const ctx = canvas.getContext('2d');
   const video = scene.querySelector('video');
   const cards = [...document.querySelectorAll('.entry-card')];
-  const scenePosition = scene.querySelector('.crystal-position');
   let width = 0, height = 0, raf = 0, lastFrame = 0, clock = 0;
-  let scrollFrame = 0, pointerFrame = 0;
-  let pointer = { x: 0, y: 0 };
   const particles = Array.from({ length: 46 }, (_, i) => ({
     x: ((i * 137.508) % 997) / 997,
     y: ((i * 89.327) % 991) / 991,
@@ -73,7 +69,6 @@
     if (reduced.matches) {
       document.documentElement.classList.remove('cinema-ready');
       cards.forEach(card => card.classList.add('is-visible'));
-      scene.style.removeProperty('--scene-x'); scene.style.removeProperty('--scene-y');
     }
     if (!document.hidden && !reduced.matches) {
       lastFrame = performance.now(); raf = requestAnimationFrame(frame);
@@ -81,24 +76,6 @@
     } else if (video) { video.pause(); scene.classList.remove('has-video'); }
     paint();
   }
-  function scrollScene() {
-    scrollFrame = 0;
-    const fade = Math.max(.12, 1 - scrollY / 670);
-    scenePosition.style.setProperty('--scene-opacity', String(fade));
-  }
-  window.addEventListener('scroll', () => {
-    if (!scrollFrame) scrollFrame = requestAnimationFrame(scrollScene);
-  }, { passive: true });
-  window.addEventListener('pointermove', event => {
-    if (reduced.matches || !fine.matches || scrollY > 700) return;
-    pointer = { x: (event.clientX / innerWidth - .5) * 18, y: (event.clientY / innerHeight - .5) * 14 };
-    if (pointerFrame) return;
-    pointerFrame = requestAnimationFrame(() => {
-      pointerFrame = 0;
-      scene.style.setProperty('--scene-x', `${pointer.x}px`);
-      scene.style.setProperty('--scene-y', `${pointer.y}px`);
-    });
-  }, { passive: true });
   if (video) {
     video.muted = true;
     video.addEventListener('playing', () => scene.classList.add('has-video'));
@@ -108,5 +85,5 @@
   window.addEventListener('pageshow', syncMotion);
   document.addEventListener('visibilitychange', syncMotion);
   reduced.addEventListener('change', syncMotion);
-  resize(); scrollScene(); syncMotion();
+  resize(); syncMotion();
 })();
