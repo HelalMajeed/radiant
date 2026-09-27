@@ -15,12 +15,12 @@ a,button{-webkit-tap-highlight-color:transparent}
 .scene-aura{position:absolute;width:52vw;height:52vw;border-radius:50%;filter:blur(75px);opacity:.085;animation:aura-drift 24s ease-in-out infinite alternate}
 .scene-aura--blue{right:-16%;top:-25%;background:radial-gradient(circle,#7e9fff,transparent 65%)}
 .scene-aura--violet{left:25%;bottom:-60%;background:radial-gradient(circle,#bc83ce,transparent 65%);animation-delay:-12s}
-.scene-particles{position:absolute;inset:0;width:100%;height:100%;opacity:.75}
+.scene-particles{position:absolute;inset:0;width:100%;height:100%;opacity:.92}
 /* The sculpture is rendered at the current screen resolution, not enlarged video. */
 .cinema-poster,.cinema-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;pointer-events:none}
 .cinema-poster{opacity:.7;transition:opacity .6s ease}
 .cinema-art{opacity:0;transition:opacity 1.2s ease}
-.cinema-scene.has-crystal .cinema-art{opacity:.78}
+.cinema-scene.has-crystal .cinema-art{opacity:.95}
 .cinema-scene.has-crystal .cinema-poster{opacity:0}
 .scene-shade{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 10%,#05060773 65%,#050607d1 100%),linear-gradient(90deg,#0506079c,transparent 40%,#05060726)}
 
@@ -170,7 +170,7 @@ body[data-page="introduction"] .entry-grid{margin-bottom:68px}
 
  .scene-shade{background:linear-gradient(0deg,#05060780,transparent 70%,#0506078f)}
  .cinema-poster{opacity:.5;object-position:60% center}
- .cinema-scene.has-crystal .cinema-art{opacity:.58}
+ .cinema-scene.has-crystal .cinema-art{opacity:.73}
  body[data-page="introduction"] .lede{font-size:13px}
  body[data-page="introduction"] .entry-grid{margin-bottom:48px}
  .lede{font-size:13px;line-height:1.9;max-width:none;margin-top:22px}.hero-actions{gap:22px;margin-top:25px}.hero-primary,.hero-secondary{font-size:11px;gap:15px}.hero-primary{padding:14px 16px}.hero-scroll{font-size:8px;margin-top:27px}

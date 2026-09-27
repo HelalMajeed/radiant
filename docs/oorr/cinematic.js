@@ -13,12 +13,18 @@
   let quality = 1, slowFrames = 0;
   const cards = [...document.querySelectorAll('.entry-card')];
   let width = 0, height = 0, raf = 0, lastFrame = 0, clock = 0;
-  const particles = Array.from({ length: 46 }, (_, i) => ({
-    x: ((i * 137.508) % 997) / 997,
-    y: ((i * 89.327) % 991) / 991,
-    r: i % 9 === 0 ? 1.15 : .55,
-    speed: .3 + (i % 5) * .12,
-    phase: i * 1.8
+  const seed = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  const particles = Array.from({length: innerWidth < 821 ? 240 : 620}, (_, i) => ({
+    x: seed(i), y: seed(i + 71), depth: .3 + seed(i + 51) * .7,
+    r: i % 29 === 0 ? 1.1 : .32 + seed(i + 4) * .48,
+    speed: 2 + seed(i + 16) * 6, phase: seed(i + 8) * Math.PI * 2
+  }));
+  const strands = Array.from({length: innerWidth < 821 ? 8 : 16}, (_, i) => ({
+    angle: (seed(i + 94) - .5) * 2.5,
+    radius: .47 + seed(i + 31) * .32,
+    flatten: .18 + seed(i + 24) * .29,
+    phase: seed(i + 59) * Math.PI * 2,
+    speed: .035 + seed(i + 68) * .055
   }));
 
   document.querySelectorAll('.sb-list li').forEach((item, i) => item.style.setProperty('--nav-index', i));
@@ -40,15 +46,52 @@
   }
 
   function paint() {
-    if (crystal) crystal.render(clock / 1000 + 6, pointer);
+    const time = clock / 1000;
+    if (crystal) crystal.render(time + 6, pointer);
     if (!ctx) return;
     ctx.clearRect(0, 0, width, height);
-    for (const p of particles) {
-      const x = p.x * width + Math.sin(clock * .00014 + p.phase) * 12;
-      const y = ((p.y * height - clock * .002 * p.speed) % height + height) % height;
-      const alpha = .12 + (Math.sin(clock * .0007 + p.phase) + 1) * .12;
-      ctx.fillStyle = `rgba(180,200,236,${alpha})`;
-      ctx.beginPath(); ctx.arc(x, y, p.r, 0, Math.PI * 2); ctx.fill();
+    const cx = width * (width < 821 ? .5 : .585), cy = height * .46;
+    // Wide, fine field lines. Short luminous segments travel along each curve.
+    for (const [index, s] of strands.entries()) {
+      const angle = s.angle + Math.sin(time * .018 + s.phase) * .075;
+      const c = Math.cos(angle), sn = Math.sin(angle), radius = Math.max(width, height) * s.radius;
+      const point = a => {
+        const x = Math.cos(a) * radius, y = Math.sin(a) * radius * s.flatten + Math.sin(a * 3 + s.phase + time * .045) * 18;
+        return [cx + x * c - y * sn + pointer.x * s.flatten * 12, cy + x * sn + y * c];
+      };
+      ctx.lineWidth = .45;
+      ctx.strokeStyle = index % 3 === 0 ? 'rgba(164,146,198,.12)' : 'rgba(138,181,210,.1)';
+      ctx.beginPath();
+      for (let j = 0; j <= 100; j++) {const p = point(j / 100 * Math.PI * 2); if (j) ctx.lineTo(...p); else ctx.moveTo(...p);}
+      ctx.stroke();
+      const tip = time * s.speed + s.phase;
+      ctx.beginPath();
+      for (let j = 0; j <= 20; j++) {const p = point(tip - .21 + j / 20 * .21); if (j) ctx.lineTo(...p); else ctx.moveTo(...p);}
+      ctx.strokeStyle = index % 3 === 0 ? 'rgba(192,171,222,.42)' : 'rgba(174,216,235,.46)';
+      ctx.lineWidth = .8; ctx.stroke();
+      const head = point(tip);ctx.fillStyle = 'rgba(221,234,247,.7)';ctx.beginPath();ctx.arc(...head,1,0,Math.PI * 2);ctx.fill();
+    }
+    const cells = new Map();
+    for (const [i, p] of particles.entries()) {
+      const x = ((p.x * width + Math.sin(time * .07 + p.phase) * 21 + time * p.speed * .28) % width + width) % width;
+      const y = ((p.y * height - time * p.speed * p.depth) % height + height) % height;
+      const pulse = .7 + Math.sin(time * .7 + p.phase) * .3;
+      const alpha = (.22 + p.depth * .5) * pulse;
+      const cell = `${Math.floor(x / 105)},${Math.floor(y / 105)}`;
+      const neighbor = cells.get(cell);
+      if (neighbor && i % 3 === 0) {
+        const distance = Math.hypot(x - neighbor.x, y - neighbor.y);
+        if (distance < 85) {
+          ctx.strokeStyle = `rgba(150,184,217,${.1 * (1 - distance / 85)})`;ctx.lineWidth = .45;
+          ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(neighbor.x,neighbor.y);ctx.stroke();
+        }
+      }
+      cells.set(cell, {x,y});
+      ctx.fillStyle = `rgba(194,215,238,${alpha})`;
+      ctx.beginPath();ctx.arc(x, y, p.r, 0, Math.PI * 2);ctx.fill();
+      if (i % 29 === 0) {
+        ctx.fillStyle = `rgba(150,194,233,${alpha * .075})`;ctx.beginPath();ctx.arc(x,y,p.r * 3.5,0,Math.PI * 2);ctx.fill();
+      }
     }
   }
   function resize() {
