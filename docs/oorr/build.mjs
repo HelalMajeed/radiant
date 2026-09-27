@@ -29,20 +29,15 @@ import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-// Original footage: https://www.pinterest.com/pin/351912466939967/
-// Remuxed without recompression, with MP4 metadata moved first for fast playback.
-// A frame from that same video covers reduced motion and failed playback.
-const BACKGROUND_VIDEO = "assets/crystal-background.mp4";
-
+// Original procedural sculpture, with a high-resolution still for no-WebGL clients.
 function background(docs) {
-  const poster = `${docs}assets/crystal-poster.webp`;
   return `
 <div class="cinema-scene" aria-hidden="true">
   <div class="scene-aura scene-aura--blue"></div>
   <div class="scene-aura scene-aura--violet"></div>
   <canvas class="scene-particles"></canvas>
-  <img class="cinema-poster" src="${poster}" width="720" height="720" alt="" fetchpriority="high">
-${BACKGROUND_VIDEO ? `  <video class="cinema-video" muted loop playsinline preload="metadata" poster="${poster}" tabindex="-1"><source src="${esc(docs + BACKGROUND_VIDEO)}"></video>` : ""}
+  <img class="cinema-poster" src="${docs}assets/crystal-still.webp" width="1800" height="1200" alt="" fetchpriority="high">
+  <canvas class="cinema-art"></canvas>
   <div class="scene-shade"></div>
 </div>`;
 }
@@ -323,6 +318,7 @@ ${pager(index)}    </article>
 </footer>
 
 <script src="${docs}docs.js"></script>
+<script src="${docs}crystal.js"></script>
 <script src="${docs}cinematic.js"></script>
 </body>
 </html>
