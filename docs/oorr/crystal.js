@@ -140,16 +140,20 @@
         }
       }
     }
-    // Three intersecting great circles outline a small sphere at the center.
+    // Three main great circles and two softer circular rims outline the center.
     // The existing outer orbits and two faint inner tracks stay in place.
     // All rings share the slow rotation without adding more satellites.
-    const sphereRings=[[1.3,Math.PI/2,0],[1.3,.62,.95],[1.3,.62,-.95]];
+    const sphereRings=[
+      [1.3,Math.PI/2,0],[1.3,.62,.95],[1.3,.62,-.95],
+      [1.34,1.15,.55],[1.34,1.15,-.8]
+    ];
     const ringPaths=[...orbits,[1.38,.76,.35],[1.53,-.63,-.44],...sphereRings];
     ringPaths.forEach(([radius,tilt,twist],index)=>{
       const contours=index<3?3:1;
       for(let band=0;band<contours;band++) {
         const r=radius+(band-(contours-1)/2)*.015;
-        const alpha=band===Math.floor(contours/2)?(index<3?.34:index<5?.2:index<7?.16:.29):.11;
+        const mainAlpha=index<3?.34:index<5?.2:index<7?.16:index<10?.29:.22;
+        const alpha=band===Math.floor(contours/2)?mainAlpha:.11;
         for(let i=0;i<240;i++) {
           for(const a of [i/240*Math.PI*2,(i+1)/240*Math.PI*2]) line([a,r,tilt],a+index*.7,alpha,[2,0,twist]);
         }
