@@ -9,26 +9,43 @@
 <meta name="color-scheme" content="dark">
 <link rel="icon" type="image/png" href="../../assets/favicon.png">
 <link rel="stylesheet" href="docs.css">
+<link rel="stylesheet" href="cinematic.css">
 </head>
 <body data-page="introduction">
+
+
+<div class="cinema-scene" aria-hidden="true">
+  <div class="scene-aura scene-aura--blue"></div>
+  <div class="scene-aura scene-aura--violet"></div>
+  <canvas class="scene-particles"></canvas>
+  <div class="crystal-position"><div class="crystal-depth">
+    <div class="crystal-halo"></div>
+    <div class="crystal-float"><img src="assets/crystal-frame.png" width="240" height="240" alt="" fetchpriority="high"></div>
+    <span class="crystal-orbit crystal-orbit--one"><i></i></span>
+    <span class="crystal-orbit crystal-orbit--two"><i></i></span>
+    <span class="crystal-orbit crystal-orbit--three"><i></i></span>
+  </div></div>
+
+  <div class="scene-shade"></div>
+</div>
 
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="topbar">
   <nav class="navset" aria-label="Site">
     <a class="navlink" href="../../">Radiant</a>
-    <a class="navlink is-here" href="./">Docs</a>
+    <a class="navlink is-here" href="./">API Platform</a>
     <a class="navlink" href="https://oorr.ai" target="_blank" rel="noopener">oorr.ai</a>
   </nav>
   <a class="brand" href="../../">
     <img src="../../assets/radiant-mark.png" alt="" draggable="false">
-    <b>radiant<i>/oorr</i></b>
+    <b>oorr<i> / api platform</i></b>
   </a>
   <div class="topbar-end">
     <a class="bracket" href="https://api.oorr.ai" target="_blank" rel="noopener">.open&nbsp;<em>{API}</em></a>
     <button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="sidebar">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      .index
+      Menu
     </button>
   </div>
   <div class="readbar" id="readbar" aria-hidden="true"><i></i></div>
@@ -97,20 +114,25 @@
   <main class="content" id="main">
 
     <div class="page-head">
-      <p class="ph-num"><b>01</b><i>&nbsp;/&nbsp;10</i></p>
-      <h1>Introduction <span class="pill pill--live">Live</span></h1>
+      <p class="ph-num"><span>DEVELOPER PLATFORM</span><i aria-hidden="true">/</i><b>01 — Introduction</b></p>
+      <h1><span class="hero-title-line">OORR API</span><span class="hero-title-line hero-title-line--silver">Platform.</span></h1>
         <p class="lede">OORR AI is an Arabic-first tutoring model served by Radiant. Its current
         production model is <strong>Sargon&nbsp;1.5</strong>. This is the reference
         for its HTTP API: how to call chat and image requests, what the responses
         contain, how tokens are counted, and which limits apply.</p>
-      <canvas class="globe" id="globe" aria-hidden="true"></canvas>
+      <div class="hero-actions"><a class="hero-primary" href="quickstart/">Start building <span aria-hidden="true">↗</span></a><a class="hero-secondary" href="api-reference/">Explore the API <span aria-hidden="true">→</span></a></div><a class="hero-scroll" href="#documentation-content"><span aria-hidden="true">↓</span> Introduction to Sargon 1.5</a>
     </div>
 
+<nav class="entry-grid" aria-label="Explore the API">
+    <a class="entry-card" href="chat/"><span>01 / CONVERSATION</span><strong>Chat &amp; streaming</strong><i aria-hidden="true">↗</i></a>
+    <a class="entry-card" href="vision/"><span>02 / VISION</span><strong>Work with images</strong><i aria-hidden="true">↗</i></a>
+    <a class="entry-card" href="api-reference/"><span>03 / REFERENCE</span><strong>Explore the endpoints</strong><i aria-hidden="true">↗</i></a>
+  </nav>
       <div class="ticker" aria-hidden="true">
         <div class="ticker-run"><span>SARGON 1.5 — PRODUCTION MODEL — <b>LIVE</b><em> ///////// </em></span><span>CHAT + VISION — <b>LIVE</b><em> ///////// </em></span><span>SSE STREAMING — <b>LIVE</b><em> ///////// </em></span><span>BASE URL API.OORR.AI — <b>LIVE</b><em> ///////// </em></span><span>API-KEY AUTH — <b>PENDING</b><em> ///////// </em></span><span>BILLING — <b>PENDING</b><em> ///////// </em></span><span>USAGE READ-BACK — <b>NOT IMPLEMENTED</b><em> ///////// </em></span><span>SARGON 1.5 — PRODUCTION MODEL — <b>LIVE</b><em> ///////// </em></span><span>CHAT + VISION — <b>LIVE</b><em> ///////// </em></span><span>SSE STREAMING — <b>LIVE</b><em> ///////// </em></span><span>BASE URL API.OORR.AI — <b>LIVE</b><em> ///////// </em></span><span>API-KEY AUTH — <b>PENDING</b><em> ///////// </em></span><span>BILLING — <b>PENDING</b><em> ///////// </em></span><span>USAGE READ-BACK — <b>NOT IMPLEMENTED</b><em> ///////// </em></span></div>
       </div>
 
-    <article class="prose">
+    <article class="prose" id="documentation-content">
 <p>
         OORR AI answers students' questions in Arabic in the voice of an Iraqi
         teacher, working through problems step by step. Radiant is the platform that
@@ -185,5 +207,6 @@
 </footer>
 
 <script src="docs.js"></script>
+<script src="cinematic.js"></script>
 </body>
 </html>
