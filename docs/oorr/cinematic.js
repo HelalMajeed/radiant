@@ -4,15 +4,12 @@
   const scene = document.querySelector('.cinema-scene');
   if (!scene) return;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const fine = matchMedia('(pointer: fine)');
+  let motionReduced = reduced.matches;
   const canvas = scene.querySelector('canvas');
   const ctx = canvas.getContext('2d');
   const video = scene.querySelector('video');
   const cards = [...document.querySelectorAll('.entry-card')];
-  const scenePosition = scene.querySelector('.crystal-position');
   let width = 0, height = 0, raf = 0, lastFrame = 0, clock = 0;
-  let scrollFrame = 0, pointerFrame = 0;
-  let pointer = { x: 0, y: 0 };
   const particles = Array.from({ length: 46 }, (_, i) => ({
     x: ((i * 137.508) % 997) / 997,
     y: ((i * 89.327) % 991) / 991,
@@ -22,9 +19,9 @@
   }));
 
   document.querySelectorAll('.sb-list li').forEach((item, i) => item.style.setProperty('--nav-index', i));
-  if (!reduced.matches) document.documentElement.classList.add('cinema-ready');
+  if (!motionReduced) document.documentElement.classList.add('cinema-ready');
 
-  if (!reduced.matches && 'IntersectionObserver' in window) {
+  if (!motionReduced && 'IntersectionObserver' in window) {
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (!entry.isIntersecting) return;
@@ -59,7 +56,7 @@
   }
   function frame(now) {
     raf = 0;
-    if (reduced.matches || document.hidden || !ctx) return;
+    if (motionReduced || document.hidden || !ctx) return;
     if (now - lastFrame >= 1000 / 30) {
       clock += Math.min(now - lastFrame, 50); lastFrame = now; paint();
     }
@@ -68,45 +65,37 @@
   function syncMotion() {
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
-    scene.classList.toggle('scene-sleeping', document.hidden || reduced.matches);
+    scene.classList.toggle('scene-sleeping', document.hidden || motionReduced);
     document.documentElement.classList.toggle('scene-sleeping', document.hidden);
-    if (reduced.matches) {
+    if (motionReduced) {
       document.documentElement.classList.remove('cinema-ready');
       cards.forEach(card => card.classList.add('is-visible'));
-      scene.style.removeProperty('--scene-x'); scene.style.removeProperty('--scene-y');
     }
-    if (!document.hidden && !reduced.matches) {
+    if (!document.hidden && !motionReduced) {
       lastFrame = performance.now(); raf = requestAnimationFrame(frame);
       if (video) video.play().catch(() => scene.classList.remove('has-video'));
     } else if (video) { video.pause(); scene.classList.remove('has-video'); }
     paint();
   }
-  function scrollScene() {
-    scrollFrame = 0;
-    const fade = Math.max(.12, 1 - scrollY / 670);
-    scenePosition.style.setProperty('--scene-opacity', String(fade));
-  }
-  window.addEventListener('scroll', () => {
-    if (!scrollFrame) scrollFrame = requestAnimationFrame(scrollScene);
-  }, { passive: true });
-  window.addEventListener('pointermove', event => {
-    if (reduced.matches || !fine.matches || scrollY > 700) return;
-    pointer = { x: (event.clientX / innerWidth - .5) * 18, y: (event.clientY / innerHeight - .5) * 14 };
-    if (pointerFrame) return;
-    pointerFrame = requestAnimationFrame(() => {
-      pointerFrame = 0;
-      scene.style.setProperty('--scene-x', `${pointer.x}px`);
-      scene.style.setProperty('--scene-y', `${pointer.y}px`);
-    });
-  }, { passive: true });
   if (video) {
     video.muted = true;
-    video.addEventListener('playing', () => scene.classList.add('has-video'));
+    video.addEventListener('playing', () => {
+      // A queued play request can finish after the motion preference changes.
+      if (motionReduced || document.hidden) {
+        video.pause();
+        scene.classList.remove('has-video');
+      } else {
+        scene.classList.add('has-video');
+      }
+    });
     video.addEventListener('error', () => scene.classList.remove('has-video'));
   }
   window.addEventListener('resize', resize);
   window.addEventListener('pageshow', syncMotion);
   document.addEventListener('visibilitychange', syncMotion);
-  reduced.addEventListener('change', syncMotion);
-  resize(); scrollScene(); syncMotion();
+  reduced.addEventListener('change', event => {
+    motionReduced = event.matches;
+    syncMotion();
+  });
+  resize(); syncMotion();
 })();
