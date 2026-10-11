@@ -60,6 +60,7 @@ body{
   font-size:11px; letter-spacing:.2em; text-indent:.2em;
   text-transform:uppercase;
   color:rgba(255,255,255,.52);
+  background:transparent;
   text-decoration:none;
   padding:9px 15px;
   border:1px solid rgba(255,255,255,.14);
@@ -68,13 +69,14 @@ body{
   transition:color .4s var(--ease), border-color .4s var(--ease),
              box-shadow .4s var(--ease), background .4s var(--ease);
 }
-.navlink:hover,.navlink:focus-visible{
+.navlink:not(:disabled):hover,.navlink:focus-visible{
   color:#fff;
   border-color:rgba(140,195,255,.7);
   background:rgba(77,157,255,.07);
   box-shadow:0 0 22px rgba(77,157,255,.22);
   outline:none;
 }
+.navlink:disabled{ cursor:not-allowed; }
 
 @media (max-width:560px){
   .topnav{ justify-content:center; padding-top:14px; }
